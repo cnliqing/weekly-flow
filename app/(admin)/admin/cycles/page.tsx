@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
+import { getAdminSession } from "@/lib/auth";
 import { createCurrentWeekCycle as createCycle, getDefaultProject } from "@/lib/cycles";
 import { prisma } from "@/lib/prisma";
 
@@ -7,6 +8,12 @@ export const dynamic = "force-dynamic";
 
 async function createCurrentWeekCycle() {
   "use server";
+
+  const session = await getAdminSession();
+
+  if (!session) {
+    return;
+  }
 
   const project = await getDefaultProject();
 
