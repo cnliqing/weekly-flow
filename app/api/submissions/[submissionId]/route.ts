@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getAdminSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { normalizeStructuredContent, type SubmissionStructuredContent } from "@/lib/submission";
 
@@ -11,6 +12,12 @@ type RouteContext = {
 };
 
 export async function PATCH(request: NextRequest, context: RouteContext) {
+  const session = await getAdminSession();
+
+  if (!session) {
+    return NextResponse.json({ error: "未登录或无管理员权限。" }, { status: 401 });
+  }
+
   const { submissionId } = await context.params;
   const body = (await request.json().catch(() => null)) as
     | {

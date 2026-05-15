@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
+import { createCurrentWeekCycle as createCycle, getDefaultProject } from "@/lib/cycles";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -7,8 +8,11 @@ export const dynamic = "force-dynamic";
 async function createCurrentWeekCycle() {
   "use server";
 
-  const { POST } = await import("@/app/api/cycles/route");
-  await POST();
+  const project = await getDefaultProject();
+
+  if (project) {
+    await createCycle(project.id);
+  }
 }
 
 function formatDate(date: Date): string {
