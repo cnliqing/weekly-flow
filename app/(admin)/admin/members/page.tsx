@@ -1,8 +1,78 @@
 import { MemberForm } from "@/components/forms/member-form";
 import { Card } from "@/components/ui/card";
+import { getAdminSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { revalidatePath } from "next/cache";
 
 export const dynamic = "force-dynamic";
+
+async function addMember(formData: FormData) {
+  "use server";
+
+  const session = await getAdminSession();
+
+  if (!session) {
+    return;
+  }
+
+  const projectId = String(formData.get("projectId") ?? "").trim();
+  const name = String(formData.get("name") ?? "").trim();
+
+  if (!projectId || !name) {
+    return;
+  }
+
+  await prisma.member.upsert({
+    where: {
+      projectId_name: {
+        projectId,
+        name,
+      },
+    },
+    update: {
+      isActive: true,
+      role: "member",
+    },
+    create: {
+      projectId,
+      name,
+      role: "member",
+      isActive: true,
+    },
+  });
+
+  revalidatePath("/admin/members");
+  revalidatePath("/admin/cycles");
+}
+
+async function toggleMemberStatus(formData: FormData) {
+  "use server";
+
+  const session = await getAdminSession();
+
+  if (!session) {
+    return;
+  }
+
+  const memberId = String(formData.get("memberId") ?? "").trim();
+  const nextStatus = String(formData.get("isActive") ?? "") === "true";
+
+  if (!memberId) {
+    return;
+  }
+
+  await prisma.member.update({
+    where: {
+      id: memberId,
+    },
+    data: {
+      isActive: nextStatus,
+    },
+  });
+
+  revalidatePath("/admin/members");
+  revalidatePath("/admin/cycles");
+}
 
 export default async function AdminMembersPage() {
   const projects = await prisma.project.findMany({
@@ -42,7 +112,7 @@ export default async function AdminMembersPage() {
 
       <Card>
         <h3 className="mb-5 text-xl font-semibold">新增成员</h3>
-        <MemberForm projects={projects} />
+        <MemberForm action={addMember} projects={projects} />
       </Card>
 
       <Card>
@@ -59,6 +129,7 @@ export default async function AdminMembersPage() {
                 <th className="px-4 py-3 font-semibold">项目</th>
                 <th className="px-4 py-3 font-semibold">角色</th>
                 <th className="px-4 py-3 font-semibold">状态</th>
+                <th className="px-4 py-3 font-semibold">操作</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-line bg-white">
@@ -73,6 +144,22 @@ export default async function AdminMembersPage() {
                   </td>
                   <td className="px-4 py-3 text-ink-700">
                     {member.isActive ? "启用" : "停用"}
+                  </td>
+                  <td className="px-4 py-3">
+                    <form action={toggleMemberStatus}>
+                      <input name="memberId" type="hidden" value={member.id} />
+                      <input
+                        name="isActive"
+                        type="hidden"
+                        value={member.isActive ? "false" : "true"}
+                      />
+                      <button
+                        className="font-semibold text-accent hover:underline"
+                        type="submit"
+                      >
+                        {member.isActive ? "停用" : "启用"}
+                      </button>
+                    </form>
                   </td>
                 </tr>
               ))}

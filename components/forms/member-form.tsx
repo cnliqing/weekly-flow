@@ -4,12 +4,13 @@ type MemberFormProject = {
 };
 
 type MemberFormProps = {
+  action: (formData: FormData) => void | Promise<void>;
   projects: MemberFormProject[];
 };
 
-export function MemberForm({ projects }: MemberFormProps) {
+export function MemberForm({ action, projects }: MemberFormProps) {
   return (
-    <form className="grid gap-5 md:grid-cols-[1fr_1fr_auto] md:items-end">
+    <form action={action} className="grid gap-5 md:grid-cols-[1fr_1fr_auto] md:items-end">
       <label className="flex flex-col gap-2 text-sm font-medium text-ink-700">
         成员姓名
         <input
@@ -36,16 +37,11 @@ export function MemberForm({ projects }: MemberFormProps) {
       </label>
 
       <button
-        className="h-11 rounded-md bg-accent px-4 text-sm font-semibold text-white opacity-70"
-        disabled
-        type="button"
+        className="h-11 rounded-md bg-accent px-4 text-sm font-semibold text-white transition hover:bg-[#176447]"
+        type="submit"
       >
         添加成员
       </button>
-
-      <p className="text-sm leading-6 text-ink-500 md:col-span-3">
-        成员新增与更新的服务端动作会在后续任务接入；当前表单先固定字段结构，便于 Task 4 直接连接。
-      </p>
     </form>
   );
 }

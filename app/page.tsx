@@ -1,17 +1,19 @@
 import { AppShell } from "@/components/layout/app-shell";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import Link from "next/link";
 
 const guideCards = [
   {
     title: "管理员入口",
     description: "配置项目成员、创建周报周期，并在同一处完成汇总和定稿。",
     action: "进入管理后台",
+    href: "/admin",
   },
   {
     title: "成员填写入口",
     description: "成员免登录选择姓名，填写本周工作、延期说明和下周计划。",
     action: "填写本周周报",
+    href: "/w",
   },
 ];
 
@@ -25,7 +27,7 @@ export default function HomePage() {
             周报通 / WeeklyFlow
           </h2>
           <p className="mt-5 text-base leading-8 text-ink-700">
-            面向项目团队的轻量周报工作台。管理员维护成员与周期，成员快速提交周报，后续将接入汇总、历史查看与计划承接检查。
+            面向项目团队的轻量周报工作台。管理员维护成员与周期，成员快速提交周报，系统辅助检查计划承接并生成汇总草稿。
           </p>
         </div>
 
@@ -38,13 +40,17 @@ export default function HomePage() {
                   {card.description}
                 </p>
               </div>
-              <Button
+              <Link
                 aria-label={card.action}
-                className="mt-8 w-fit"
-                variant={card.title === "管理员入口" ? "primary" : "secondary"}
+                className={
+                  card.title === "管理员入口"
+                    ? "mt-8 inline-flex h-10 w-fit items-center justify-center rounded-md bg-accent px-4 text-sm font-semibold text-white transition hover:bg-[#176447]"
+                    : "mt-8 inline-flex h-10 w-fit items-center justify-center rounded-md border border-line bg-white px-4 text-sm font-semibold text-ink-900 transition hover:border-ink-500"
+                }
+                href={card.href}
               >
                 {card.action}
-              </Button>
+              </Link>
             </Card>
           ))}
         </div>

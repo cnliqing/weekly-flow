@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getAiModel } from "@/lib/ai/client";
+import { checkPlanWithAi } from "@/lib/ai/plan-check";
 import { getAdminSession } from "@/lib/auth";
 import { checkPlanCompletion } from "@/lib/plan-check";
 import { prisma } from "@/lib/prisma";
@@ -103,15 +105,56 @@ export async function POST(request: NextRequest, context: RouteContext) {
     structuredContent,
     freeTextContent,
   );
+  const aiRequestPayload = {
+    memberName: member.name,
+    previousPlanItems,
+    currentWorkItems: structuredContent.workItems,
+    currentProblemItems: structuredContent.problemItems,
+    freeTextContent,
+  };
+  let finalPlanCheck = planCheck;
+
+  try {
+    const aiPlanCheck = await checkPlanWithAi(aiRequestPayload);
+    finalPlanCheck = aiPlanCheck;
+
+    await prisma.aiRunLog.create({
+      data: {
+        projectId: cycle.projectId,
+        cycleId: cycle.id,
+        type: "plan_check",
+        model: getAiModel() || "unconfigured",
+        requestPayload: aiRequestPayload,
+        responsePayload: aiPlanCheck,
+        success: true,
+      },
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "AI 承接检查失败，已使用本地规则。";
+
+    await prisma.aiRunLog.create({
+      data: {
+        projectId: cycle.projectId,
+        cycleId: cycle.id,
+        type: "plan_check",
+        model: getAiModel() || "unconfigured",
+        requestPayload: aiRequestPayload,
+        responsePayload: planCheck,
+        success: false,
+        errorMessage: message,
+      },
+    });
+  }
 
   const submission = await upsertMemberSubmission({
     cycleId,
     memberId,
     structuredContent,
     freeTextContent,
-    planCheckSummary: planCheck.summary,
-    planCheckWarnings: planCheck,
+    planCheckSummary: finalPlanCheck.summary,
+    planCheckWarnings: finalPlanCheck,
   });
 
-  return NextResponse.json({ submission, planCheck }, { status: 201 });
+  return NextResponse.json({ submission, planCheck: finalPlanCheck }, { status: 201 });
 }
