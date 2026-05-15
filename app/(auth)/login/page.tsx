@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { LoginForm } from "@/components/forms/login-form";
 import { getAdminSession } from "@/lib/auth";
+import { sanitizeAdminCallbackUrl } from "@/lib/auth-helpers";
 
 type LoginPageProps = {
   searchParams?: Promise<{
@@ -9,18 +10,12 @@ type LoginPageProps = {
   }>;
 };
 
-function readCallbackUrl(value: string | string[] | undefined): string {
-  if (Array.isArray(value)) {
-    return value[0] ?? "/admin";
-  }
-
-  return value ?? "/admin";
-}
-
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const session = await getAdminSession();
   const resolvedSearchParams = await searchParams;
-  const callbackUrl = readCallbackUrl(resolvedSearchParams?.callbackUrl);
+  const callbackUrl = sanitizeAdminCallbackUrl(
+    resolvedSearchParams?.callbackUrl,
+  );
 
   if (session) {
     redirect(callbackUrl);
