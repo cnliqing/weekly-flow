@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Card } from "@/components/ui/card";
+import { FinalReportEditor } from "@/components/reports/final-report-editor";
 import { prisma } from "@/lib/prisma";
 import { normalizeStructuredContent, type SubmissionStructuredContent } from "@/lib/submission";
 
@@ -48,6 +49,7 @@ export default async function AdminCycleDetailPage({ params }: PageProps) {
           submittedAt: "desc",
         },
       },
+      consolidatedReport: true,
     },
   });
 
@@ -125,6 +127,16 @@ export default async function AdminCycleDetailPage({ params }: PageProps) {
             </tbody>
           </table>
         </div>
+      </Card>
+
+      <Card>
+        <FinalReportEditor
+          cycleId={cycle.id}
+          initialDraftContent={cycle.consolidatedReport?.draftContent}
+          initialFinalContent={cycle.consolidatedReport?.finalContent}
+          initialPolishedContent={cycle.consolidatedReport?.polishedContent}
+          initialStatus={cycle.consolidatedReport?.status ?? "draft"}
+        />
       </Card>
 
       <Card>
