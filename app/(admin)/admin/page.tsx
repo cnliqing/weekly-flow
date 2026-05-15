@@ -22,6 +22,11 @@ const adminEntrances = [
     description: "查看已归档周报和最终版本，沉淀团队阶段性产出。",
     href: "/admin/history",
   },
+  {
+    title: "设置",
+    description: "检查数据库、AI 和管理员账号等运行环境配置状态。",
+    href: "/admin/settings",
+  },
 ];
 
 export default function AdminPage() {

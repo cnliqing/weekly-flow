@@ -8,6 +8,7 @@ const navItems = [
   { label: "成员", href: "/admin/members" },
   { label: "周报", href: "/admin/cycles" },
   { label: "历史", href: "/admin/history" },
+  { label: "设置", href: "/admin/settings" },
 ];
 
 export const dynamic = "force-dynamic";

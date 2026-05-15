@@ -20,6 +20,7 @@ npm run dev
 npm test
 npm run lint
 npm run typecheck
+npm run test:e2e
 npm run build
 npm run prisma:generate
 npx prisma validate
