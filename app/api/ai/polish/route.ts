@@ -21,71 +21,57 @@ export async function POST(request: NextRequest) {
   const explicitReportContent =
     typeof body?.reportContent === "string" ? body.reportContent : "";
 
-  const cycle = cycleId
-    ? await prisma.weeklyReportCycle.findUnique({
-        where: {
-          id: cycleId,
-        },
-        include: {
-          consolidatedReport: true,
-        },
-      })
-    : null;
-
-  if (cycleId && !cycle) {
-    return NextResponse.json({ error: "周报周期不存在。" }, { status: 404 });
+  if (!cycleId) {
+    return NextResponse.json({ error: "缺少周报周期 ID。" }, { status: 400 });
   }
 
-  const projectId =
-    cycle?.projectId ??
-    (
-      await prisma.project.findFirst({
-        orderBy: {
-          createdAt: "asc",
-        },
-      })
-    )?.id;
+  const cycle = await prisma.weeklyReportCycle.findUnique({
+    where: {
+      id: cycleId,
+    },
+    include: {
+      consolidatedReport: true,
+    },
+  });
 
-  if (!projectId) {
-    return NextResponse.json({ error: "项目不存在，无法记录 AI 运行日志。" }, { status: 404 });
+  if (!cycle) {
+    return NextResponse.json({ error: "周报周期不存在。" }, { status: 404 });
   }
 
   const reportContent =
     explicitReportContent ||
-    cycle?.consolidatedReport?.draftContent ||
-    cycle?.consolidatedReport?.finalContent ||
-    cycle?.consolidatedReport?.polishedContent ||
+    cycle.consolidatedReport?.draftContent ||
+    cycle.consolidatedReport?.finalContent ||
+    cycle.consolidatedReport?.polishedContent ||
     "";
 
   const requestPayload = {
-    cycleId: cycle?.id,
+    cycleId: cycle.id,
     reportContent,
   };
 
   try {
     const result = await polishWeeklyReport({ reportContent });
 
-    const consolidatedReport = cycle
-      ? await prisma.consolidatedReport.upsert({
-          where: {
-            cycleId: cycle.id,
-          },
-          update: {
-            polishedContent: result.polishedContent,
-            updatedBy: session.user.email ?? session.user.name ?? "admin",
-          },
-          create: {
-            cycleId: cycle.id,
-            polishedContent: result.polishedContent,
-            updatedBy: session.user.email ?? session.user.name ?? "admin",
-          },
-        })
-      : null;
+    const consolidatedReport = await prisma.consolidatedReport.upsert({
+      where: {
+        cycleId: cycle.id,
+      },
+      update: {
+        polishedContent: result.polishedContent,
+        updatedBy: session.user.email ?? session.user.name ?? "admin",
+      },
+      create: {
+        cycleId: cycle.id,
+        polishedContent: result.polishedContent,
+        updatedBy: session.user.email ?? session.user.name ?? "admin",
+      },
+    });
 
     await prisma.aiRunLog.create({
       data: {
-        projectId,
-        cycleId: cycle?.id,
+        projectId: cycle.projectId,
+        cycleId: cycle.id,
         type: "polish",
         model: getAiModel() || "unconfigured",
         requestPayload,
@@ -101,8 +87,8 @@ export async function POST(request: NextRequest) {
 
     await prisma.aiRunLog.create({
       data: {
-        projectId,
-        cycleId: cycle?.id,
+        projectId: cycle.projectId,
+        cycleId: cycle.id,
         type: "polish",
         model: getAiModel() || "unconfigured",
         requestPayload,
