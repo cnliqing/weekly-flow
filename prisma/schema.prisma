@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 enum MemberRole {
@@ -32,7 +32,7 @@ enum AiRunType {
 
 model Project {
   id          String              @id @default(cuid())
-  name        String
+  name        String              @unique
   description String?
   members     Member[]
   cycles      WeeklyReportCycle[]
@@ -70,6 +70,8 @@ model WeeklyReportCycle {
   aiRuns             AiRunLog[]
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
+
+  @@unique([projectId, weekStartDate])
 }
 
 model MemberSubmission {

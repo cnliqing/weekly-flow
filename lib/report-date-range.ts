@@ -7,10 +7,23 @@ export type WeeklyRange = {
 
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
 
-function atUtcDate(date: Date): Date {
-  return new Date(
-    Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()),
-  );
+function getDateInTimeZone(date: Date, timeZone: string): Date {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(date);
+
+  const year = parts.find((part) => part.type === "year")?.value;
+  const month = parts.find((part) => part.type === "month")?.value;
+  const day = parts.find((part) => part.type === "day")?.value;
+
+  if (!year || !month || !day) {
+    throw new Error(`Unable to format date in time zone: ${timeZone}`);
+  }
+
+  return new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)));
 }
 
 function addDays(date: Date, days: number): Date {
@@ -21,8 +34,11 @@ function formatDate(date: Date): string {
   return date.toISOString().slice(0, 10);
 }
 
-export function getWeeklyRange(startDate: Date): WeeklyRange {
-  const date = atUtcDate(startDate);
+export function getWeeklyRange(
+  startDate: Date,
+  timeZone = "Asia/Shanghai",
+): WeeklyRange {
+  const date = getDateInTimeZone(startDate, timeZone);
   const isoDay = date.getUTCDay() === 0 ? 7 : date.getUTCDay();
   const monday = addDays(date, 1 - isoDay);
 
