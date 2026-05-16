@@ -1,10 +1,10 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getAdminSession } from "@/lib/auth";
 import { createCurrentWeekCycle, getDefaultProject } from "@/lib/cycles";
 
 export const dynamic = "force-dynamic";
 
-export async function POST() {
+export async function POST(request: NextRequest) {
   const session = await getAdminSession();
 
   if (!session) {
@@ -20,7 +20,19 @@ export async function POST() {
     );
   }
 
-  const cycle = await createCurrentWeekCycle(project.id);
+  const body = (await request.json().catch(() => null)) as
+    | { reportDate?: unknown }
+    | null;
+  const reportDate =
+    typeof body?.reportDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(body.reportDate)
+      ? new Date(`${body.reportDate}T00:00:00+08:00`)
+      : new Date();
 
-  return NextResponse.json({ cycle }, { status: 201 });
+  if (Number.isNaN(reportDate.getTime())) {
+    return NextResponse.json({ error: "请选择有效日期。" }, { status: 400 });
+  }
+
+  const { cycle, created } = await createCurrentWeekCycle(project.id, reportDate);
+
+  return NextResponse.json({ cycle, created }, { status: created ? 201 : 200 });
 }

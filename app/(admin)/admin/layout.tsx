@@ -1,15 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { AdminNav } from "@/components/layout/admin-nav";
+import { FeedbackToast } from "@/components/ui/feedback-toast";
 import { getAdminSession } from "@/lib/auth";
-
-const navItems = [
-  { label: "总览", href: "/admin" },
-  { label: "项目", href: "/admin/projects" },
-  { label: "成员", href: "/admin/members" },
-  { label: "周报", href: "/admin/cycles" },
-  { label: "历史", href: "/admin/history" },
-  { label: "设置", href: "/admin/settings" },
-];
 
 export const dynamic = "force-dynamic";
 
@@ -37,17 +30,7 @@ export default async function AdminLayout({
           </p>
         </div>
 
-        <nav aria-label="后台导航" className="flex flex-wrap gap-2 md:flex-col">
-          {navItems.map((item) => (
-            <Link
-              className="rounded-md px-3 py-2 text-sm font-medium text-ink-700 transition hover:bg-paper hover:text-ink-900"
-              href={item.href}
-              key={item.href}
-            >
-              {item.label}
-            </Link>
-          ))}
-        </nav>
+        <AdminNav />
 
         <Link
           className="mt-auto rounded-md border border-line px-3 py-2 text-center text-sm font-semibold text-ink-700 transition hover:border-ink-500 hover:text-ink-900"
@@ -57,7 +40,10 @@ export default async function AdminLayout({
         </Link>
       </aside>
 
-      <main className="flex-1 px-5 py-8 md:px-10 lg:px-14">{children}</main>
+      <main className="flex-1 px-5 py-8 md:px-10 lg:px-14">
+        <FeedbackToast />
+        {children}
+      </main>
     </div>
   );
 }

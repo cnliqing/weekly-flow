@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
 type FinalReportEditorProps = {
@@ -16,6 +16,8 @@ type ApiResult = {
   polishedContent?: string;
   error?: string;
 };
+
+type PendingAction = "summarize" | "polish" | "save" | null;
 
 export function FinalReportEditor({
   cycleId,
@@ -33,16 +35,27 @@ export function FinalReportEditor({
   const [reportStatus, setReportStatus] = useState(initialStatus);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-  const [isPending, startTransition] = useTransition();
+  const [pendingAction, setPendingAction] = useState<PendingAction>(null);
+  const isPending = pendingAction !== null;
 
-  function runAction(action: () => Promise<void>) {
+  async function runAction(nextAction: Exclude<PendingAction, null>) {
     setError("");
     setMessage("");
-    startTransition(() => {
-      void action().catch((caught) => {
-        setError(caught instanceof Error ? caught.message : "操作失败。");
-      });
-    });
+    setPendingAction(nextAction);
+
+    try {
+      if (nextAction === "summarize") {
+        await summarize();
+      } else if (nextAction === "polish") {
+        await polish();
+      } else {
+        await saveFinal();
+      }
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "操作失败。");
+    } finally {
+      setPendingAction(null);
+    }
   }
 
   async function summarize() {
@@ -95,26 +108,38 @@ export function FinalReportEditor({
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button disabled={isPending} onClick={() => runAction(summarize)}>
-            AI 汇总
+          <Button disabled={isPending} onClick={() => void runAction("summarize")}>
+            {pendingAction === "summarize" ? "AI 汇总中..." : "AI 汇总"}
           </Button>
           <Button
             disabled={isPending || !draftContent.trim()}
-            onClick={() => runAction(polish)}
+            onClick={() => void runAction("polish")}
             variant="secondary"
           >
-            AI 润色
+            {pendingAction === "polish" ? "AI 润色中..." : "AI 润色"}
           </Button>
           <Button
             disabled={isPending || !(polishedContent || draftContent).trim()}
-            onClick={() => runAction(saveFinal)}
+            onClick={() => void runAction("save")}
             variant="secondary"
           >
-            保存定稿
+            {pendingAction === "save" ? "保存中..." : "保存定稿"}
           </Button>
         </div>
       </div>
 
+      {pendingAction ? (
+        <div
+          aria-live="polite"
+          className="rounded-md border border-accent/20 bg-accent/10 px-4 py-3 text-sm font-medium leading-6 text-ink-800"
+        >
+          {pendingAction === "summarize"
+            ? "AI 正在汇总成员周报，通常需要等待一会儿，请不要关闭页面。"
+            : pendingAction === "polish"
+              ? "AI 正在润色汇总周报，完成后会自动填入润色稿。"
+              : "正在保存定稿。"}
+        </div>
+      ) : null}
       {message ? <p className="text-sm font-medium text-accent">{message}</p> : null}
       {error ? <p className="text-sm font-medium text-red-600">{error}</p> : null}
 

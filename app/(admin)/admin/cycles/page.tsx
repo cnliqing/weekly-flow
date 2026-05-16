@@ -1,29 +1,77 @@
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
+import { getActionErrorMessage, redirectWithFeedback } from "@/lib/action-feedback";
 import { getAdminSession } from "@/lib/auth";
 import { createCurrentWeekCycle as createCycle, getDefaultProject } from "@/lib/cycles";
 import { prisma } from "@/lib/prisma";
+import { revalidatePath } from "next/cache";
 
 export const dynamic = "force-dynamic";
 
-async function createCurrentWeekCycle() {
+async function createCurrentWeekCycle(formData: FormData) {
   "use server";
 
-  const session = await getAdminSession();
+  let type: "success" | "error" = "success";
+  let message = "本周周报已创建。";
 
-  if (!session) {
-    return;
+  try {
+    const session = await getAdminSession();
+
+    if (!session) {
+      throw new Error("未登录或无管理员权限。");
+    }
+
+    const project = await getDefaultProject();
+
+    if (!project) {
+      throw new Error("默认项目不存在，请先创建项目或执行初始化数据。");
+    }
+
+    const reportDateValue = String(formData.get("reportDate") ?? "").trim();
+    const reportDate = parseInputDate(reportDateValue);
+    const result = await createCycle(project.id, reportDate);
+    revalidatePath("/admin/cycles");
+    message = result.created
+      ? "周报已创建。"
+      : "该日期所在周的周报已存在，已更新为开放状态。";
+  } catch (error) {
+    type = "error";
+    message = getActionErrorMessage(error, "创建本周周报失败");
   }
 
-  const project = await getDefaultProject();
-
-  if (project) {
-    await createCycle(project.id);
-  }
+  redirectWithFeedback("/admin/cycles", type, message);
 }
 
 function formatDate(date: Date): string {
   return date.toISOString().slice(0, 10);
+}
+
+function getTodayInputDate(): string {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    day: "2-digit",
+    month: "2-digit",
+    timeZone: "Asia/Shanghai",
+    year: "numeric",
+  }).formatToParts(new Date());
+  const year = parts.find((part) => part.type === "year")?.value;
+  const month = parts.find((part) => part.type === "month")?.value;
+  const day = parts.find((part) => part.type === "day")?.value;
+
+  return year && month && day ? `${year}-${month}-${day}` : formatDate(new Date());
+}
+
+function parseInputDate(value: string): Date {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    throw new Error("请选择有效日期。");
+  }
+
+  const date = new Date(`${value}T00:00:00+08:00`);
+
+  if (Number.isNaN(date.getTime())) {
+    throw new Error("请选择有效日期。");
+  }
+
+  return date;
 }
 
 export default async function AdminCyclesPage() {
@@ -53,12 +101,25 @@ export default async function AdminCyclesPage() {
           </p>
         </div>
 
-        <form action={createCurrentWeekCycle}>
+        <form
+          action={createCurrentWeekCycle}
+          className="flex flex-col gap-3 rounded-md border border-line bg-white p-4 md:min-w-80"
+        >
+          <label className="flex flex-col gap-2 text-sm font-medium text-ink-700">
+            周报日期
+            <input
+              className="h-11 rounded-md border border-line bg-white px-3 text-base text-ink-900 outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/20"
+              defaultValue={getTodayInputDate()}
+              name="reportDate"
+              required
+              type="date"
+            />
+          </label>
           <button
             className="h-11 rounded-md bg-accent px-4 text-sm font-semibold text-white transition hover:bg-[#176447]"
             type="submit"
           >
-            创建本周周报
+            创建指定周周报
           </button>
         </form>
       </div>

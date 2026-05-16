@@ -31,7 +31,10 @@ export default async function MemberEntryIndexPage() {
     <main className="min-h-screen bg-paper px-5 py-8 text-ink-900 md:px-10">
       <section className="mx-auto grid max-w-4xl gap-6">
         <div>
-          <p className="text-sm font-semibold text-accent">成员填写入口</p>
+          <Link className="text-sm font-semibold text-accent" href="/">
+            返回上一级
+          </Link>
+          <p className="mt-5 text-sm font-semibold text-accent">成员填写入口</p>
           <h1 className="mt-3 text-3xl font-semibold tracking-normal">
             选择本周周报
           </h1>

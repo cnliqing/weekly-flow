@@ -80,17 +80,25 @@ export function ReportEditor({
     setStatus("saving");
     setErrorMessage("");
 
-    const response = await fetch(`/api/cycles/${cycleId}/submissions`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        memberId,
-        structuredContent,
-        freeTextContent,
-      }),
-    });
+    let response: Response;
+
+    try {
+      response = await fetch(`/api/cycles/${cycleId}/submissions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          memberId,
+          structuredContent,
+          freeTextContent,
+        }),
+      });
+    } catch {
+      setStatus("error");
+      setErrorMessage("网络异常，提交失败，请稍后重试。");
+      return;
+    }
 
     if (!response.ok) {
       const payload = (await response.json().catch(() => null)) as
@@ -152,9 +160,14 @@ export function ReportEditor({
         <Button disabled={status === "saving"} type="submit">
           {status === "saving" ? "提交中..." : "提交周报"}
         </Button>
+        {status === "saving" ? (
+          <p className="text-sm font-medium text-ink-500">
+            正在保存并进行计划承接检查，请稍候。
+          </p>
+        ) : null}
         {status === "saved" ? (
           <p className="text-sm font-medium text-emerald-700">
-            已保存，本次提交会覆盖你之前的版本。
+            已保存，并已完成计划承接检查。本次提交会覆盖你之前的版本。
           </p>
         ) : null}
         {status === "error" ? (

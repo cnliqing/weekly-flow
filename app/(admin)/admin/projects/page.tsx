@@ -1,4 +1,5 @@
 import { Card } from "@/components/ui/card";
+import { getActionErrorMessage, redirectWithFeedback } from "@/lib/action-feedback";
 import { getAdminSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
@@ -8,32 +9,42 @@ export const dynamic = "force-dynamic";
 async function updateProject(formData: FormData) {
   "use server";
 
-  const session = await getAdminSession();
+  let type: "success" | "error" = "success";
+  let message = "项目信息已保存。";
 
-  if (!session) {
-    return;
+  try {
+    const session = await getAdminSession();
+
+    if (!session) {
+      throw new Error("未登录或无管理员权限。");
+    }
+
+    const projectId = String(formData.get("projectId") ?? "").trim();
+    const name = String(formData.get("name") ?? "").trim();
+    const description = String(formData.get("description") ?? "").trim();
+
+    if (!projectId || !name) {
+      throw new Error("项目名称不能为空。");
+    }
+
+    await prisma.project.update({
+      where: {
+        id: projectId,
+      },
+      data: {
+        name,
+        description: description || null,
+      },
+    });
+
+    revalidatePath("/admin/projects");
+    revalidatePath("/admin");
+  } catch (error) {
+    type = "error";
+    message = getActionErrorMessage(error, "保存项目信息失败");
   }
 
-  const projectId = String(formData.get("projectId") ?? "").trim();
-  const name = String(formData.get("name") ?? "").trim();
-  const description = String(formData.get("description") ?? "").trim();
-
-  if (!projectId || !name) {
-    return;
-  }
-
-  await prisma.project.update({
-    where: {
-      id: projectId,
-    },
-    data: {
-      name,
-      description: description || null,
-    },
-  });
-
-  revalidatePath("/admin/projects");
-  revalidatePath("/admin");
+  redirectWithFeedback("/admin/projects", type, message);
 }
 
 export default async function AdminProjectsPage() {

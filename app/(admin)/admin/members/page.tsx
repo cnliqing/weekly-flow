@@ -1,5 +1,7 @@
 import { MemberForm } from "@/components/forms/member-form";
+import { ConfirmSubmitButton } from "@/components/forms/confirm-submit-button";
 import { Card } from "@/components/ui/card";
+import { getActionErrorMessage, redirectWithFeedback } from "@/lib/action-feedback";
 import { getAdminSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
@@ -9,69 +11,147 @@ export const dynamic = "force-dynamic";
 async function addMember(formData: FormData) {
   "use server";
 
-  const session = await getAdminSession();
+  let type: "success" | "error" = "success";
+  let message = "成员已添加。";
 
-  if (!session) {
-    return;
-  }
+  try {
+    const session = await getAdminSession();
 
-  const projectId = String(formData.get("projectId") ?? "").trim();
-  const name = String(formData.get("name") ?? "").trim();
+    if (!session) {
+      throw new Error("未登录或无管理员权限。");
+    }
 
-  if (!projectId || !name) {
-    return;
-  }
+    const projectId = String(formData.get("projectId") ?? "").trim();
+    const name = String(formData.get("name") ?? "").trim();
 
-  await prisma.member.upsert({
-    where: {
-      projectId_name: {
+    if (!projectId || !name) {
+      throw new Error("请选择项目并填写成员姓名。");
+    }
+
+    await prisma.member.upsert({
+      where: {
+        projectId_name: {
+          projectId,
+          name,
+        },
+      },
+      update: {
+        isActive: true,
+        role: "member",
+      },
+      create: {
         projectId,
         name,
+        role: "member",
+        isActive: true,
       },
-    },
-    update: {
-      isActive: true,
-      role: "member",
-    },
-    create: {
-      projectId,
-      name,
-      role: "member",
-      isActive: true,
-    },
-  });
+    });
 
-  revalidatePath("/admin/members");
-  revalidatePath("/admin/cycles");
+    revalidatePath("/admin/members");
+    revalidatePath("/admin/cycles");
+    message = "成员已添加或重新启用。";
+  } catch (error) {
+    type = "error";
+    message = getActionErrorMessage(error, "添加成员失败");
+  }
+
+  redirectWithFeedback("/admin/members", type, message);
 }
 
 async function toggleMemberStatus(formData: FormData) {
   "use server";
 
-  const session = await getAdminSession();
+  let type: "success" | "error" = "success";
+  let message = "成员状态已更新。";
 
-  if (!session) {
-    return;
+  try {
+    const session = await getAdminSession();
+
+    if (!session) {
+      throw new Error("未登录或无管理员权限。");
+    }
+
+    const memberId = String(formData.get("memberId") ?? "").trim();
+    const nextStatus = String(formData.get("isActive") ?? "") === "true";
+
+    if (!memberId) {
+      throw new Error("缺少成员 ID。");
+    }
+
+    await prisma.member.update({
+      where: {
+        id: memberId,
+      },
+      data: {
+        isActive: nextStatus,
+      },
+    });
+
+    revalidatePath("/admin/members");
+    revalidatePath("/admin/cycles");
+    message = nextStatus ? "成员已启用。" : "成员已停用。";
+  } catch (error) {
+    type = "error";
+    message = getActionErrorMessage(error, "更新成员状态失败");
   }
 
-  const memberId = String(formData.get("memberId") ?? "").trim();
-  const nextStatus = String(formData.get("isActive") ?? "") === "true";
+  redirectWithFeedback("/admin/members", type, message);
+}
 
-  if (!memberId) {
-    return;
+async function deleteMember(formData: FormData) {
+  "use server";
+
+  let type: "success" | "error" = "success";
+  let message = "成员已删除。";
+
+  try {
+    const session = await getAdminSession();
+
+    if (!session) {
+      throw new Error("未登录或无管理员权限。");
+    }
+
+    const memberId = String(formData.get("memberId") ?? "").trim();
+
+    if (!memberId) {
+      throw new Error("缺少成员 ID。");
+    }
+
+    const member = await prisma.member.findUnique({
+      where: {
+        id: memberId,
+      },
+      include: {
+        _count: {
+          select: {
+            submissions: true,
+          },
+        },
+      },
+    });
+
+    if (!member) {
+      throw new Error("成员不存在或已被删除。");
+    }
+
+    if (member._count.submissions > 0) {
+      throw new Error("该成员已有周报提交，不能删除；可停用成员以保留历史记录。");
+    }
+
+    await prisma.member.delete({
+      where: {
+        id: memberId,
+      },
+    });
+
+    revalidatePath("/admin/members");
+    revalidatePath("/admin/cycles");
+  } catch (error) {
+    type = "error";
+    message = getActionErrorMessage(error, "删除成员失败");
   }
 
-  await prisma.member.update({
-    where: {
-      id: memberId,
-    },
-    data: {
-      isActive: nextStatus,
-    },
-  });
-
-  revalidatePath("/admin/members");
-  revalidatePath("/admin/cycles");
+  redirectWithFeedback("/admin/members", type, message);
 }
 
 export default async function AdminMembersPage() {
@@ -146,6 +226,7 @@ export default async function AdminMembersPage() {
                     {member.isActive ? "启用" : "停用"}
                   </td>
                   <td className="px-4 py-3">
+                    <div className="flex flex-wrap gap-3">
                     <form action={toggleMemberStatus}>
                       <input name="memberId" type="hidden" value={member.id} />
                       <input
@@ -160,6 +241,17 @@ export default async function AdminMembersPage() {
                         {member.isActive ? "停用" : "启用"}
                       </button>
                     </form>
+                    <form action={deleteMember}>
+                      <input name="memberId" type="hidden" value={member.id} />
+                      <ConfirmSubmitButton
+                        className="font-semibold text-red-600 hover:underline"
+                        confirmMessage={`确认删除成员「${member.name}」？已有周报提交的成员会被系统阻止删除。`}
+                        type="submit"
+                      >
+                        删除
+                      </ConfirmSubmitButton>
+                    </form>
+                    </div>
                   </td>
                 </tr>
               ))}

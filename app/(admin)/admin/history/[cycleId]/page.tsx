@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Card } from "@/components/ui/card";
+import { formatAiRunType } from "@/lib/ai-run";
 import { prisma } from "@/lib/prisma";
 import {
   normalizeStructuredContent,
@@ -191,7 +192,9 @@ export default async function AdminHistoryDetailPage({ params }: PageProps) {
                   <td className="px-4 py-3 text-ink-700">
                     {formatDateTime(run.createdAt)}
                   </td>
-                  <td className="px-4 py-3 text-ink-700">{run.type}</td>
+                  <td className="px-4 py-3 text-ink-700">
+                    {formatAiRunType(run.type)}
+                  </td>
                   <td className="px-4 py-3 text-ink-700">{run.model}</td>
                   <td className="px-4 py-3 text-ink-700">
                     {run.success ? "成功" : "失败"}
