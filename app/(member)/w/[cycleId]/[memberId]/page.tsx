@@ -45,7 +45,13 @@ export default async function MemberWeeklyReportPage({ params }: PageProps) {
     }),
   ]);
 
-  if (!cycle || !member || member.projectId !== cycle.projectId || !member.isActive) {
+  if (
+    !cycle ||
+    !member ||
+    member.projectId !== cycle.projectId ||
+    !member.isActive ||
+    member.role !== "member"
+  ) {
     notFound();
   }
 

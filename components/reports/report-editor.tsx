@@ -63,6 +63,10 @@ export function ReportEditor({
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">(
     "idle",
   );
+  const [aiCheckStatus, setAiCheckStatus] = useState<
+    "idle" | "checking" | "done" | "error"
+  >("idle");
+  const [aiCheckMessage, setAiCheckMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
   const structuredContent = useMemo(
@@ -78,6 +82,8 @@ export function ReportEditor({
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setStatus("saving");
+    setAiCheckStatus("idle");
+    setAiCheckMessage("");
     setErrorMessage("");
 
     let response: Response;
@@ -111,9 +117,43 @@ export function ReportEditor({
 
     const payload = (await response.json()) as {
       planCheck?: PlanCheckResult | null;
+      submission?: { id: string } | null;
     };
     setPlanCheck(payload.planCheck ?? null);
     setStatus("saved");
+
+    if (payload.submission?.id) {
+      void runAiPlanCheck(payload.submission.id);
+    }
+  }
+
+  async function runAiPlanCheck(submissionId: string) {
+    setAiCheckStatus("checking");
+    setAiCheckMessage("AI 正在进行计划承接检查，完成后会自动更新提示。");
+
+    const response = await fetch("/api/ai/plan-check", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        submissionId,
+        memberId,
+      }),
+    });
+    const payload = (await response.json().catch(() => null)) as
+      | { planCheck?: PlanCheckResult; error?: string }
+      | null;
+
+    if (!response.ok) {
+      setAiCheckStatus("error");
+      setAiCheckMessage(payload?.error ?? "AI 承接检查失败，已保留本地检查结果。");
+      return;
+    }
+
+    setPlanCheck(payload?.planCheck ?? null);
+    setAiCheckStatus("done");
+    setAiCheckMessage("AI 计划承接检查已完成。");
   }
 
   return (
@@ -174,6 +214,18 @@ export function ReportEditor({
           <p className="text-sm font-medium text-red-700">{errorMessage}</p>
         ) : null}
       </div>
+
+      {aiCheckStatus !== "idle" ? (
+        <p
+          className={
+            aiCheckStatus === "error"
+              ? "text-sm font-medium text-amber-700"
+              : "text-sm font-medium text-ink-500"
+          }
+        >
+          {aiCheckMessage}
+        </p>
+      ) : null}
     </form>
   );
 }

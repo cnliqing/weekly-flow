@@ -7,6 +7,16 @@ function parseDate(date: string): Date {
   return new Date(`${date}T00:00:00.000Z`);
 }
 
+function addDays(date: Date, days: number): Date {
+  const next = new Date(date);
+  next.setUTCDate(next.getUTCDate() + days);
+  return next;
+}
+
+function formatDate(date: Date): string {
+  return date.toISOString().slice(0, 10);
+}
+
 export async function getDefaultProject() {
   const defaultProject = await prisma.project.findUnique({
     where: {
@@ -27,7 +37,23 @@ export async function getDefaultProject() {
 
 export async function createCurrentWeekCycle(projectId: string, date = new Date()) {
   const range = getWeeklyRange(date);
-  const weekStartDate = parseDate(range.weekStartDate);
+  return createReportCycleForRange(
+    projectId,
+    parseDate(range.weekStartDate),
+    parseDate(range.weekEndDate),
+  );
+}
+
+export async function createReportCycleForRange(
+  projectId: string,
+  weekStartDate: Date,
+  weekEndDate: Date,
+) {
+  if (weekEndDate < weekStartDate) {
+    throw new Error("结束日期不能早于开始日期。");
+  }
+
+  const title = `${formatDate(weekStartDate)}~${formatDate(weekEndDate)} 周报`;
   const existingCycle = await prisma.weeklyReportCycle.findUnique({
     where: {
       projectId_weekStartDate: {
@@ -43,10 +69,10 @@ export async function createCurrentWeekCycle(projectId: string, date = new Date(
         id: existingCycle.id,
       },
       data: {
-        weekEndDate: parseDate(range.weekEndDate),
-        nextWeekStartDate: parseDate(range.nextWeekStartDate),
-        nextWeekEndDate: parseDate(range.nextWeekEndDate),
-        title: `${range.weekStartDate} 周报`,
+        weekEndDate,
+        nextWeekStartDate: addDays(weekStartDate, 7),
+        nextWeekEndDate: addDays(weekEndDate, 7),
+        title,
         status: "open",
       },
     });
@@ -61,10 +87,10 @@ export async function createCurrentWeekCycle(projectId: string, date = new Date(
     data: {
       projectId,
       weekStartDate,
-      weekEndDate: parseDate(range.weekEndDate),
-      nextWeekStartDate: parseDate(range.nextWeekStartDate),
-      nextWeekEndDate: parseDate(range.nextWeekEndDate),
-      title: `${range.weekStartDate} 周报`,
+      weekEndDate,
+      nextWeekStartDate: addDays(weekStartDate, 7),
+      nextWeekEndDate: addDays(weekEndDate, 7),
+      title,
       status: "open",
     },
   });

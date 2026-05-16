@@ -71,7 +71,12 @@ export async function POST(request: NextRequest, context: RouteContext) {
     return NextResponse.json({ error: "周报周期不存在。" }, { status: 404 });
   }
 
-  if (!member || member.projectId !== cycle.projectId || !member.isActive) {
+  if (
+    !member ||
+    member.projectId !== cycle.projectId ||
+    !member.isActive ||
+    member.role !== "member"
+  ) {
     return NextResponse.json({ error: "成员不在当前项目中。" }, { status: 404 });
   }
 

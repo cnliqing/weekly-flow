@@ -19,7 +19,7 @@ export default async function AdminLayout({
 
   return (
     <div className="min-h-screen bg-paper text-ink-900 md:flex">
-      <aside className="flex w-full flex-col gap-8 border-b border-line bg-white/70 px-6 py-6 md:min-h-screen md:w-72 md:border-b-0 md:border-r">
+      <aside className="flex w-full flex-col gap-8 border-b border-line bg-white/70 px-6 py-6 md:sticky md:top-0 md:h-screen md:w-72 md:overflow-y-auto md:border-b-0 md:border-r">
         <div>
           <p className="text-sm font-semibold text-accent">WeeklyFlow</p>
           <h1 className="mt-2 text-2xl font-semibold tracking-normal">

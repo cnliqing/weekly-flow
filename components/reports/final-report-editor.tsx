@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 
 type FinalReportEditorProps = {
@@ -29,6 +29,10 @@ export function FinalReportEditor({
   const [draftContent, setDraftContent] = useState(
     initialDraftContent ?? initialFinalContent ?? "",
   );
+  const [finalContent, setFinalContent] = useState(initialFinalContent ?? "");
+  const [savedFinalContent, setSavedFinalContent] = useState(
+    initialFinalContent ?? "",
+  );
   const [polishedContent, setPolishedContent] = useState(
     initialPolishedContent ?? "",
   );
@@ -37,6 +41,50 @@ export function FinalReportEditor({
   const [error, setError] = useState("");
   const [pendingAction, setPendingAction] = useState<PendingAction>(null);
   const isPending = pendingAction !== null;
+  const hasFinalReport = reportStatus === "finalized" || finalContent.trim().length > 0;
+  const hasUnsavedFinalChanges = finalContent !== savedFinalContent;
+
+  useEffect(() => {
+    if (!hasUnsavedFinalChanges) {
+      return;
+    }
+
+    function handleBeforeUnload(event: BeforeUnloadEvent) {
+      event.preventDefault();
+      event.returnValue = "";
+    }
+
+    function handleDocumentClick(event: MouseEvent) {
+      const target = event.target;
+      const link = target instanceof Element ? target.closest("a[href]") : null;
+
+      if (!link || !(link instanceof HTMLAnchorElement)) {
+        return;
+      }
+
+      const href = link.getAttribute("href") ?? "";
+
+      if (
+        href.startsWith("#") ||
+        link.target === "_blank" ||
+        link.origin !== window.location.origin
+      ) {
+        return;
+      }
+
+      if (!window.confirm("定稿周报有未保存修改，离开后这些修改将丢失。确定要离开吗？")) {
+        event.preventDefault();
+      }
+    }
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    document.addEventListener("click", handleDocumentClick, true);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      document.removeEventListener("click", handleDocumentClick, true);
+    };
+  }, [hasUnsavedFinalChanges]);
 
   async function runAction(nextAction: Exclude<PendingAction, null>) {
     setError("");
@@ -83,19 +131,35 @@ export function FinalReportEditor({
   }
 
   async function saveFinal() {
-    const finalContent = polishedContent || draftContent;
+    const nextFinalContent = hasFinalReport
+      ? finalContent
+      : polishedContent || draftContent;
 
-    if (!finalContent.trim()) {
+    if (!nextFinalContent.trim()) {
       throw new Error("定稿内容不能为空。");
     }
 
     await postJson("/api/reports/finalize", {
       cycleId,
-      finalContent,
+      finalContent: nextFinalContent,
     });
 
+    setFinalContent(nextFinalContent);
+    setSavedFinalContent(nextFinalContent);
     setReportStatus("finalized");
     setMessage("定稿已保存。");
+  }
+
+  async function copyFinalReport() {
+    const content = finalContent.trim();
+
+    if (!content) {
+      setError("定稿周报为空，无法复制。");
+      return;
+    }
+
+    await navigator.clipboard.writeText(content);
+    setMessage("定稿周报已复制。");
   }
 
   return (
@@ -105,6 +169,7 @@ export function FinalReportEditor({
           <h3 className="text-xl font-semibold">汇总与定稿</h3>
           <p className="mt-1 text-sm text-ink-500">
             当前状态：{reportStatus === "finalized" ? "已定稿" : "草稿"}
+            {hasUnsavedFinalChanges ? " · 定稿有未保存修改" : ""}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -142,6 +207,37 @@ export function FinalReportEditor({
       ) : null}
       {message ? <p className="text-sm font-medium text-accent">{message}</p> : null}
       {error ? <p className="text-sm font-medium text-red-600">{error}</p> : null}
+
+      {hasFinalReport ? (
+        <section className="rounded-md border border-line bg-white p-4">
+          <div className="mb-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h4 className="text-sm font-semibold text-ink-900">定稿周报</h4>
+              <p className="mt-1 text-xs text-ink-500">
+                可以继续修改定稿内容；修改后请点击“保存定稿”。
+              </p>
+            </div>
+            <Button
+              disabled={!finalContent.trim()}
+              onClick={() => void copyFinalReport()}
+              variant="secondary"
+            >
+              一键复制
+            </Button>
+          </div>
+          <textarea
+            className="min-h-72 w-full resize-y rounded-md border border-line bg-white p-4 font-mono text-sm leading-6 text-ink-900 outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
+            onChange={(event) => setFinalContent(event.target.value)}
+            placeholder="保存定稿后会在这里显示最终周报，可继续二次修改。"
+            value={finalContent}
+          />
+          {hasUnsavedFinalChanges ? (
+            <p className="mt-2 text-sm font-medium text-amber-700">
+              定稿周报有未保存修改，离开页面前请保存。
+            </p>
+          ) : null}
+        </section>
+      ) : null}
 
       <label className="block">
         <span className="text-sm font-semibold text-ink-900">汇总草稿</span>

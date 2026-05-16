@@ -3,6 +3,10 @@ import { getAiModel } from "@/lib/ai/client";
 import { checkPlanWithAi } from "@/lib/ai/plan-check";
 import { getAdminSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import {
+  normalizeStructuredContent,
+  type SubmissionStructuredContent,
+} from "@/lib/submission";
 
 export const dynamic = "force-dynamic";
 
@@ -14,19 +18,15 @@ type PlanCheckBody = {
   currentWorkItems?: unknown;
   currentProblemItems?: unknown;
   freeTextContent?: unknown;
+  memberId?: unknown;
 };
 
 export async function POST(request: NextRequest) {
-  const session = await getAdminSession();
-
-  if (!session) {
-    return NextResponse.json({ error: "未登录或无管理员权限。" }, { status: 401 });
-  }
-
   const body = (await request.json().catch(() => null)) as PlanCheckBody | null;
   const cycleId = typeof body?.cycleId === "string" ? body.cycleId.trim() : "";
   const submissionId =
     typeof body?.submissionId === "string" ? body.submissionId.trim() : "";
+  const memberId = typeof body?.memberId === "string" ? body.memberId.trim() : "";
   const cycle = cycleId
     ? await prisma.weeklyReportCycle.findUnique({
         where: {
@@ -50,6 +50,13 @@ export async function POST(request: NextRequest) {
         },
       })
     : null;
+  const session = await getAdminSession();
+  const isMemberScopedRequest =
+    Boolean(submission) && memberId.length > 0 && memberId === submission?.memberId;
+
+  if (!session && !isMemberScopedRequest) {
+    return NextResponse.json({ error: "未登录或无管理员权限。" }, { status: 401 });
+  }
 
   if (submissionId && !submission) {
     return NextResponse.json({ error: "成员提交不存在。" }, { status: 404 });
@@ -77,16 +84,48 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "项目不存在，无法记录 AI 运行日志。" }, { status: 404 });
   }
 
+  const storedContent = normalizeStructuredContent(
+    submission?.structuredContent as Partial<SubmissionStructuredContent> | null,
+  );
+  const previousSubmission = submission
+    ? await prisma.memberSubmission.findFirst({
+        where: {
+          cycle: {
+            projectId: submission.cycle.projectId,
+            weekStartDate: {
+              lt: submission.cycle.weekStartDate,
+            },
+          },
+          memberId: submission.memberId,
+        },
+        orderBy: {
+          cycle: {
+            weekStartDate: "desc",
+          },
+        },
+      })
+    : null;
+  const previousContent = normalizeStructuredContent(
+    previousSubmission?.structuredContent as Partial<SubmissionStructuredContent> | null,
+  );
   const requestPayload = {
     memberName:
       typeof body?.memberName === "string"
         ? body.memberName
         : submission?.member.name,
-    previousPlanItems: readStringArray(body?.previousPlanItems),
-    currentWorkItems: readStringArray(body?.currentWorkItems),
-    currentProblemItems: readStringArray(body?.currentProblemItems),
+    previousPlanItems: readStringArray(
+      body?.previousPlanItems,
+      previousContent.nextPlanItems,
+    ),
+    currentWorkItems: readStringArray(body?.currentWorkItems, storedContent.workItems),
+    currentProblemItems: readStringArray(
+      body?.currentProblemItems,
+      storedContent.problemItems,
+    ),
     freeTextContent:
-      typeof body?.freeTextContent === "string" ? body.freeTextContent : "",
+      typeof body?.freeTextContent === "string"
+        ? body.freeTextContent
+        : submission?.freeTextContent ?? "",
   };
 
   try {
@@ -137,9 +176,9 @@ export async function POST(request: NextRequest) {
   }
 }
 
-function readStringArray(value: unknown): string[] {
+function readStringArray(value: unknown, fallback: string[] = []): string[] {
   if (!Array.isArray(value)) {
-    return [];
+    return fallback;
   }
 
   return value
