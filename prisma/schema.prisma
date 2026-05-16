@@ -1,0 +1,119 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum MemberRole {
+  admin
+  member
+}
+
+enum CycleStatus {
+  draft
+  open
+  closed
+  archived
+}
+
+enum ReportStatus {
+  draft
+  finalized
+}
+
+enum AiRunType {
+  plan_check
+  summarize
+  polish
+}
+
+model Project {
+  id          String              @id @default(cuid())
+  name        String              @unique
+  description String?
+  members     Member[]
+  cycles      WeeklyReportCycle[]
+  aiRuns      AiRunLog[]
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+}
+
+model Member {
+  id          String             @id @default(cuid())
+  projectId   String
+  name        String
+  role        MemberRole         @default(member)
+  isActive    Boolean            @default(true)
+  project     Project            @relation(fields: [projectId], references: [id])
+  submissions MemberSubmission[]
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  @@unique([projectId, name])
+}
+
+model WeeklyReportCycle {
+  id                 String              @id @default(cuid())
+  projectId          String
+  weekStartDate      DateTime
+  weekEndDate        DateTime
+  nextWeekStartDate  DateTime
+  nextWeekEndDate    DateTime
+  title              String
+  status             CycleStatus         @default(open)
+  project            Project             @relation(fields: [projectId], references: [id])
+  submissions        MemberSubmission[]
+  consolidatedReport ConsolidatedReport?
+  aiRuns             AiRunLog[]
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+
+  @@unique([projectId, weekStartDate])
+}
+
+model MemberSubmission {
+  id                String            @id @default(cuid())
+  cycleId           String
+  memberId          String
+  structuredContent Json
+  freeTextContent   String?
+  planCheckSummary  String?
+  planCheckWarnings Json?
+  cycle             WeeklyReportCycle @relation(fields: [cycleId], references: [id])
+  member            Member            @relation(fields: [memberId], references: [id])
+  submittedAt       DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  @@unique([cycleId, memberId])
+}
+
+model ConsolidatedReport {
+  id              String            @id @default(cuid())
+  cycleId         String            @unique
+  draftContent    String?
+  finalContent    String?
+  polishedContent String?
+  status          ReportStatus      @default(draft)
+  updatedBy       String?
+  cycle           WeeklyReportCycle @relation(fields: [cycleId], references: [id])
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+}
+
+model AiRunLog {
+  id              String             @id @default(cuid())
+  projectId       String
+  cycleId         String?
+  type            AiRunType
+  model           String
+  requestPayload  Json
+  responsePayload Json?
+  success         Boolean
+  errorMessage    String?
+  project         Project            @relation(fields: [projectId], references: [id])
+  cycle           WeeklyReportCycle? @relation(fields: [cycleId], references: [id])
+  createdAt       DateTime           @default(now())
+}
