@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { ProjectMemberRows } from "@/components/forms/project-member-rows";
 import { AppShell } from "@/components/layout/app-shell";
 import { Card } from "@/components/ui/card";
 import { getActionErrorMessage, redirectWithFeedback } from "@/lib/action-feedback";
-import { memberRoleOptions, normalizeMemberRole } from "@/lib/member-role";
+import { normalizeMemberRole } from "@/lib/member-role";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -69,8 +70,6 @@ async function createProject(formData: FormData) {
 }
 
 export default function NewProjectPage() {
-  const rows = Array.from({ length: 6 }, (_, index) => index);
-
   return (
     <AppShell>
       <section className="mx-auto flex max-w-5xl flex-col gap-8">
@@ -110,49 +109,7 @@ export default function NewProjectPage() {
               </label>
             </div>
 
-            <div className="grid gap-3">
-              <div className="flex items-center justify-between gap-4">
-                <h2 className="text-xl font-semibold text-ink-900">团队成员</h2>
-                <span className="text-sm text-ink-500">空白行会自动忽略</span>
-              </div>
-
-              <div className="overflow-hidden rounded-md border border-line">
-                <table className="w-full border-collapse text-left text-sm">
-                  <thead className="bg-paper text-ink-700">
-                    <tr>
-                      <th className="px-4 py-3 font-semibold">姓名</th>
-                      <th className="px-4 py-3 font-semibold">角色</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-line bg-white">
-                    {rows.map((row) => (
-                      <tr key={row}>
-                        <td className="px-4 py-3">
-                          <input
-                            className="h-10 w-full rounded-md border border-line bg-white px-3 text-sm text-ink-900 outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/20"
-                            name="memberName"
-                            placeholder={row === 0 ? "例如：张三" : ""}
-                          />
-                        </td>
-                        <td className="px-4 py-3">
-                          <select
-                            className="h-10 w-full rounded-md border border-line bg-white px-3 text-sm text-ink-900 outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/20"
-                            defaultValue={row === 0 ? "manager" : "developer"}
-                            name="memberRole"
-                          >
-                            {memberRoleOptions.map((option) => (
-                              <option key={option.value} value={option.value}>
-                                {option.label}
-                              </option>
-                            ))}
-                          </select>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+            <ProjectMemberRows />
 
             <button
               className="h-11 w-fit rounded-md bg-accent px-5 text-sm font-semibold text-white transition hover:bg-[#176447]"
