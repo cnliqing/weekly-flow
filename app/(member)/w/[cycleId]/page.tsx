@@ -28,7 +28,7 @@ export default async function MemberSelectPage({ params }: PageProps) {
           members: {
             where: {
               isActive: true,
-              role: "member",
+              role: "developer",
             },
             orderBy: {
               createdAt: "asc",

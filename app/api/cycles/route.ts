@@ -1,25 +1,34 @@
 import { NextRequest, NextResponse } from "next/server";
-import {
-  createCurrentWeekCycle,
-  createReportCycleForRange,
-  getDefaultProject,
-} from "@/lib/cycles";
+import { createCurrentWeekCycle, createReportCycleForRange } from "@/lib/cycles";
+import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
-  const project = await getDefaultProject();
+  const body = (await request.json().catch(() => null)) as
+    | {
+        projectId?: unknown;
+        reportDate?: unknown;
+        startDate?: unknown;
+        endDate?: unknown;
+      }
+    | null;
+  const projectId = typeof body?.projectId === "string" ? body.projectId.trim() : "";
 
-  if (!project) {
-    return NextResponse.json(
-      { error: "默认项目不存在，请先运行种子数据或创建项目。" },
-      { status: 404 },
-    );
+  if (!projectId) {
+    return NextResponse.json({ error: "缺少项目 ID。" }, { status: 400 });
   }
 
-  const body = (await request.json().catch(() => null)) as
-    | { reportDate?: unknown; startDate?: unknown; endDate?: unknown }
-    | null;
+  const project = await prisma.project.findUnique({
+    where: {
+      id: projectId,
+    },
+  });
+
+  if (!project) {
+    return NextResponse.json({ error: "项目不存在。" }, { status: 404 });
+  }
+
   const startDate =
     typeof body?.startDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(body.startDate)
       ? new Date(`${body.startDate}T00:00:00.000Z`)
@@ -51,8 +60,8 @@ export async function POST(request: NextRequest) {
 
   const { cycle, created } =
     startDate && endDate
-      ? await createReportCycleForRange(project.id, startDate, endDate)
-      : await createCurrentWeekCycle(project.id, reportDate);
+      ? await createReportCycleForRange(projectId, startDate, endDate)
+      : await createCurrentWeekCycle(projectId, reportDate);
 
   return NextResponse.json({ cycle, created }, { status: created ? 201 : 200 });
 }

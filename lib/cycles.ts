@@ -1,8 +1,6 @@
 import { prisma } from "./prisma";
 import { getWeeklyRange } from "./report-date-range";
 
-export const DEFAULT_PROJECT_NAME = "周报通";
-
 function parseDate(date: string): Date {
   return new Date(`${date}T00:00:00.000Z`);
 }
@@ -15,24 +13,6 @@ function addDays(date: Date, days: number): Date {
 
 function formatDate(date: Date): string {
   return date.toISOString().slice(0, 10);
-}
-
-export async function getDefaultProject() {
-  const defaultProject = await prisma.project.findUnique({
-    where: {
-      name: DEFAULT_PROJECT_NAME,
-    },
-  });
-
-  if (defaultProject) {
-    return defaultProject;
-  }
-
-  return prisma.project.findFirst({
-    orderBy: {
-      createdAt: "asc",
-    },
-  });
 }
 
 export async function createCurrentWeekCycle(projectId: string, date = new Date()) {

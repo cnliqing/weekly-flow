@@ -28,13 +28,13 @@ async function main() {
         },
       },
       update: {
-        role: "admin",
+        role: "manager",
         isActive: true,
       },
       create: {
         projectId: project.id,
         name: "管理员",
-        role: "admin",
+        role: "manager",
       },
     }),
     prisma.member.upsert({
@@ -45,7 +45,7 @@ async function main() {
         },
       },
       update: {
-        role: "member",
+        role: "developer",
         isActive: true,
       },
       create: {
@@ -61,7 +61,7 @@ async function main() {
         },
       },
       update: {
-        role: "member",
+        role: "developer",
         isActive: true,
       },
       create: {

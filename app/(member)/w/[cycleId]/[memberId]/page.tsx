@@ -51,7 +51,7 @@ export default async function MemberWeeklyReportPage({ params }: PageProps) {
     !member ||
     member.projectId !== cycle.projectId ||
     !member.isActive ||
-    member.role !== "member"
+    member.role !== "developer"
   ) {
     notFound();
   }

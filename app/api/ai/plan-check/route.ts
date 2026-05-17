@@ -59,19 +59,13 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const projectId =
-    cycle?.projectId ??
-    submission?.cycle.projectId ??
-    (
-      await prisma.project.findFirst({
-        orderBy: {
-          createdAt: "asc",
-        },
-      })
-    )?.id;
+  const projectId = cycle?.projectId ?? submission?.cycle.projectId;
 
   if (!projectId) {
-    return NextResponse.json({ error: "项目不存在，无法记录 AI 运行日志。" }, { status: 404 });
+    return NextResponse.json(
+      { error: "缺少周报周期或成员提交，无法确定项目。" },
+      { status: 400 },
+    );
   }
 
   const storedContent = normalizeStructuredContent(

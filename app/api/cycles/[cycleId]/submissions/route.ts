@@ -68,7 +68,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     !member ||
     member.projectId !== cycle.projectId ||
     !member.isActive ||
-    member.role !== "member"
+    member.role !== "developer"
   ) {
     return NextResponse.json({ error: "成员不在当前项目中。" }, { status: 404 });
   }

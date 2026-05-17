@@ -5,13 +5,16 @@ import {
   type ProjectDataTransaction,
 } from "../../../lib/system-maintenance";
 
-type DeleteCall = string;
+type DeleteCall = {
+  args: unknown;
+  model: string;
+};
 
 function createFakeClient() {
   const calls: DeleteCall[] = [];
   const createModel = (name: string) => ({
-    deleteMany: async () => {
-      calls.push(name);
+    deleteMany: async (args?: unknown) => {
+      calls.push({ args, model: name });
       return { count: 1 };
     },
   });
@@ -48,7 +51,7 @@ describe("clearProjectData", () => {
 
     await clearProjectData(fake.client, { preserveMembers: true });
 
-    expect(fake.calls).toEqual([
+    expect(fake.calls.map((call) => call.model)).toEqual([
       "aiRunLog",
       "consolidatedReport",
       "memberSubmission",
@@ -61,13 +64,77 @@ describe("clearProjectData", () => {
 
     await clearProjectData(fake.client, { preserveMembers: false });
 
-    expect(fake.calls).toEqual([
+    expect(fake.calls.map((call) => call.model)).toEqual([
       "aiRunLog",
       "consolidatedReport",
       "memberSubmission",
       "weeklyReportCycle",
       "member",
       "project",
+    ]);
+  });
+
+  it("limits deletes to one project when projectId is provided", async () => {
+    const fake = createFakeClient();
+
+    await clearProjectData(fake.client, {
+      preserveMembers: false,
+      projectId: "project-a",
+    });
+
+    expect(fake.calls).toEqual([
+      {
+        args: {
+          where: {
+            projectId: "project-a",
+          },
+        },
+        model: "aiRunLog",
+      },
+      {
+        args: {
+          where: {
+            cycle: {
+              projectId: "project-a",
+            },
+          },
+        },
+        model: "consolidatedReport",
+      },
+      {
+        args: {
+          where: {
+            cycle: {
+              projectId: "project-a",
+            },
+          },
+        },
+        model: "memberSubmission",
+      },
+      {
+        args: {
+          where: {
+            projectId: "project-a",
+          },
+        },
+        model: "weeklyReportCycle",
+      },
+      {
+        args: {
+          where: {
+            projectId: "project-a",
+          },
+        },
+        model: "member",
+      },
+      {
+        args: {
+          where: {
+            id: "project-a",
+          },
+        },
+        model: "project",
+      },
     ]);
   });
 });

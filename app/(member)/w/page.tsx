@@ -25,8 +25,21 @@ export default async function MemberEntryIndexPage() {
     orderBy: {
       weekStartDate: "desc",
     },
-    take: 5,
+    take: 20,
   });
+  const projectGroups = Array.from(
+    cycles
+      .reduce((groups, cycle) => {
+        const group = groups.get(cycle.projectId) ?? {
+          projectName: cycle.project.name,
+          cycles: [],
+        };
+        group.cycles.push(cycle);
+        groups.set(cycle.projectId, group);
+        return groups;
+      }, new Map<string, { projectName: string; cycles: typeof cycles }>())
+      .values(),
+  );
 
   return (
     <AppShell>
@@ -44,26 +57,35 @@ export default async function MemberEntryIndexPage() {
           </p>
         </div>
 
-        <div className="grid gap-4">
-          {cycles.map((cycle) => (
-            <Card key={cycle.id}>
-              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                <div>
-                  <h2 className="text-xl font-semibold">{cycle.title}</h2>
-                  <p className="mt-2 text-sm leading-6 text-ink-700">
-                    {cycle.project.name} · {formatDate(cycle.weekStartDate)} 至{" "}
-                    {formatDate(cycle.weekEndDate)} · 已提交{" "}
-                    {cycle._count.submissions} 份
-                  </p>
-                </div>
-                <Link
-                  className="inline-flex h-10 w-fit items-center justify-center rounded-md bg-accent px-4 text-sm font-semibold text-white transition hover:bg-[#176447]"
-                  href={`/w/${cycle.id}`}
-                >
-                  选择姓名
-                </Link>
+        <div className="grid gap-6">
+          {projectGroups.map((group) => (
+            <section className="grid gap-3" key={group.projectName}>
+              <h2 className="text-xl font-semibold text-ink-900">
+                {group.projectName}
+              </h2>
+              <div className="grid gap-4">
+                {group.cycles.map((cycle) => (
+                  <Card key={cycle.id}>
+                    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                      <div>
+                        <h3 className="text-lg font-semibold">{cycle.title}</h3>
+                        <p className="mt-2 text-sm leading-6 text-ink-700">
+                          {formatDate(cycle.weekStartDate)} 至{" "}
+                          {formatDate(cycle.weekEndDate)} · 已提交{" "}
+                          {cycle._count.submissions} 份
+                        </p>
+                      </div>
+                      <Link
+                        className="inline-flex h-10 w-fit items-center justify-center rounded-md bg-accent px-4 text-sm font-semibold text-white transition hover:bg-[#176447]"
+                        href={`/w/${cycle.id}`}
+                      >
+                        选择姓名
+                      </Link>
+                    </div>
+                  </Card>
+                ))}
               </div>
-            </Card>
+            </section>
           ))}
         </div>
 

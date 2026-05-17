@@ -4,20 +4,26 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { clsx } from "clsx";
 
-const navItems = [
-  { label: "项目", href: "/" },
-  { label: "创建项目", href: "/projects/new" },
-  { label: "填写", href: "/w" },
-];
+type ProjectNavProps = {
+  projectId: string;
+};
 
-export function AdminNav() {
+export function ProjectNav({ projectId }: ProjectNavProps) {
   const pathname = usePathname();
+  const navItems = [
+    { label: "工作台", href: `/projects/${projectId}` },
+    { label: "成员", href: `/projects/${projectId}/members` },
+    { label: "周报", href: `/projects/${projectId}/cycles` },
+    { label: "历史", href: `/projects/${projectId}/history` },
+    { label: "设置", href: `/projects/${projectId}/settings` },
+    { label: "填写", href: "/w" },
+  ];
 
   return (
-    <nav aria-label="后台导航" className="flex flex-wrap gap-2 md:flex-col">
+    <nav aria-label="项目导航" className="flex flex-wrap gap-2 md:flex-col">
       {navItems.map((item) => {
         const isActive =
-          item.href === "/"
+          item.href === `/projects/${projectId}`
             ? pathname === item.href
             : pathname === item.href || pathname.startsWith(`${item.href}/`);
 

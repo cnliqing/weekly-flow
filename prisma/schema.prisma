@@ -8,8 +8,8 @@ datasource db {
 }
 
 enum MemberRole {
-  admin
-  member
+  manager
+  developer
 }
 
 enum CycleStatus {
@@ -45,7 +45,7 @@ model Member {
   id          String             @id @default(cuid())
   projectId   String
   name        String
-  role        MemberRole         @default(member)
+  role        MemberRole         @default(developer)
   isActive    Boolean            @default(true)
   project     Project            @relation(fields: [projectId], references: [id])
   submissions MemberSubmission[]
