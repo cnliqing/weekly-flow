@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
 import { notFound } from "next/navigation";
+import { ConfirmSubmitButton } from "@/components/forms/confirm-submit-button";
 import { Card } from "@/components/ui/card";
 import { getActionErrorMessage, redirectWithFeedback } from "@/lib/action-feedback";
 import { createReportCycleForRange } from "@/lib/cycles";
 import { formatCycleStatus } from "@/lib/cycle-status";
 import { prisma } from "@/lib/prisma";
+import { deleteProjectCycleData } from "@/lib/system-maintenance";
 
 export const dynamic = "force-dynamic";
 
@@ -47,6 +49,42 @@ async function createProjectCycle(formData: FormData) {
   } catch (error) {
     type = "error";
     message = getActionErrorMessage(error, "创建周报失败");
+  }
+
+  redirectWithFeedback(`/projects/${projectId}/cycles`, type, message);
+}
+
+async function deleteProjectCycle(formData: FormData) {
+  "use server";
+
+  let type: "success" | "error" = "success";
+  let message = "周报已删除。";
+  const projectId = String(formData.get("projectId") ?? "").trim();
+
+  try {
+    const cycleId = String(formData.get("cycleId") ?? "").trim();
+
+    if (!projectId || !cycleId) {
+      throw new Error("缺少项目或周报周期 ID。");
+    }
+
+    const result = await deleteProjectCycleData(prisma, {
+      cycleId,
+      projectId,
+    });
+
+    if (result.weeklyReportCycles === 0) {
+      throw new Error("周报周期不存在或不属于当前项目。");
+    }
+
+    revalidatePath("/");
+    revalidatePath(`/projects/${projectId}`);
+    revalidatePath(`/projects/${projectId}/cycles`);
+    revalidatePath(`/projects/${projectId}/history`);
+    revalidatePath("/w");
+  } catch (error) {
+    type = "error";
+    message = getActionErrorMessage(error, "删除周报失败");
   }
 
   redirectWithFeedback(`/projects/${projectId}/cycles`, type, message);
@@ -208,12 +246,25 @@ export default async function ProjectCyclesPage({ params }: PageProps) {
                     {cycle._count.submissions} 份
                   </td>
                   <td className="px-4 py-3">
-                    <Link
-                      className="font-semibold text-accent hover:underline"
-                      href={`/projects/${project.id}/cycles/${cycle.id}`}
-                    >
-                      查看
-                    </Link>
+                    <div className="flex flex-wrap gap-3">
+                      <Link
+                        className="font-semibold text-accent hover:underline"
+                        href={`/projects/${project.id}/cycles/${cycle.id}`}
+                      >
+                        查看
+                      </Link>
+                      <form action={deleteProjectCycle}>
+                        <input name="projectId" type="hidden" value={project.id} />
+                        <input name="cycleId" type="hidden" value={cycle.id} />
+                        <ConfirmSubmitButton
+                          className="font-semibold text-red-600 hover:underline"
+                          confirmMessage={`确认删除「${cycle.title}」？该周报的成员提交、汇总报告和 AI 记录都会一并删除。`}
+                          type="submit"
+                        >
+                          删除
+                        </ConfirmSubmitButton>
+                      </form>
+                    </div>
                   </td>
                 </tr>
               ))}

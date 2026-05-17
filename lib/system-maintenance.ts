@@ -30,6 +30,11 @@ export type ClearProjectDataResult = {
   projects: number;
 };
 
+export type DeleteProjectCycleDataInput = {
+  cycleId: string;
+  projectId: string;
+};
+
 export async function clearProjectData(
   client: ProjectDataClient,
   options: ClearProjectDataOptions,
@@ -87,6 +92,51 @@ export async function clearProjectData(
       weeklyReportCycles: weeklyReportCycles.count,
       members: members.count,
       projects: projects.count,
+    };
+  });
+}
+
+export async function deleteProjectCycleData(
+  client: ProjectDataClient,
+  input: DeleteProjectCycleDataInput,
+): Promise<ClearProjectDataResult> {
+  return client.$transaction(async (tx) => {
+    const aiRunLogs = await tx.aiRunLog.deleteMany({
+      where: {
+        cycleId: input.cycleId,
+        projectId: input.projectId,
+      },
+    });
+    const consolidatedReports = await tx.consolidatedReport.deleteMany({
+      where: {
+        cycleId: input.cycleId,
+        cycle: {
+          projectId: input.projectId,
+        },
+      },
+    });
+    const memberSubmissions = await tx.memberSubmission.deleteMany({
+      where: {
+        cycleId: input.cycleId,
+        cycle: {
+          projectId: input.projectId,
+        },
+      },
+    });
+    const weeklyReportCycles = await tx.weeklyReportCycle.deleteMany({
+      where: {
+        id: input.cycleId,
+        projectId: input.projectId,
+      },
+    });
+
+    return {
+      aiRunLogs: aiRunLogs.count,
+      consolidatedReports: consolidatedReports.count,
+      memberSubmissions: memberSubmissions.count,
+      members: 0,
+      projects: 0,
+      weeklyReportCycles: weeklyReportCycles.count,
     };
   });
 }

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   clearProjectData,
+  deleteProjectCycleData,
   type ProjectDataClient,
   type ProjectDataTransaction,
 } from "../../../lib/system-maintenance";
@@ -134,6 +135,60 @@ describe("clearProjectData", () => {
           },
         },
         model: "project",
+      },
+    ]);
+  });
+});
+
+describe("deleteProjectCycleData", () => {
+  it("deletes one project cycle in foreign-key-safe order", async () => {
+    const fake = createFakeClient();
+
+    await deleteProjectCycleData(fake.client, {
+      cycleId: "cycle-a",
+      projectId: "project-a",
+    });
+
+    expect(fake.calls).toEqual([
+      {
+        args: {
+          where: {
+            cycleId: "cycle-a",
+            projectId: "project-a",
+          },
+        },
+        model: "aiRunLog",
+      },
+      {
+        args: {
+          where: {
+            cycleId: "cycle-a",
+            cycle: {
+              projectId: "project-a",
+            },
+          },
+        },
+        model: "consolidatedReport",
+      },
+      {
+        args: {
+          where: {
+            cycleId: "cycle-a",
+            cycle: {
+              projectId: "project-a",
+            },
+          },
+        },
+        model: "memberSubmission",
+      },
+      {
+        args: {
+          where: {
+            id: "cycle-a",
+            projectId: "project-a",
+          },
+        },
+        model: "weeklyReportCycle",
       },
     ]);
   });

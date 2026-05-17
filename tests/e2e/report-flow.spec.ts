@@ -32,6 +32,21 @@ test("创建项目时可以增减团队成员", async ({ page }) => {
   await expect(memberNameInputs).toHaveCount(1);
 });
 
+test("项目周报列表提供删除操作", async ({ page }) => {
+  await page.goto("/projects/new");
+
+  await page
+    .getByLabel("项目名称")
+    .fill(`E2E 删除周报项目 ${Date.now()}`);
+  await page.locator('input[name="memberName"]').fill("项目经理");
+  await page.getByRole("button", { name: "创建项目" }).click();
+  await expect(page).toHaveURL(/\/projects\/[^/]+$/);
+  await page.getByRole("link", { exact: true, name: "周报周期" }).click();
+  await page.getByRole("button", { name: "创建指定周周报" }).click();
+
+  await expect(page.getByRole("button", { name: "删除" }).first()).toBeVisible();
+});
+
 test("成员填写入口显示统一侧边栏菜单", async ({ page }) => {
   await page.goto("/w");
 
