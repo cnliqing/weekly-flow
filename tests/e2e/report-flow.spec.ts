@@ -5,6 +5,9 @@ test("首页展示项目门户", async ({ page }) => {
 
   await expect(page.getByRole("heading", { exact: true, name: "项目" })).toBeVisible();
   await expect(
+    page.getByRole("link", { exact: true, name: "项目列表" }),
+  ).toHaveAttribute("aria-current", "page");
+  await expect(
     page.getByRole("main").getByRole("link", { exact: true, name: "创建项目" }),
   ).toBeVisible();
 });
@@ -22,5 +25,8 @@ test("成员填写入口显示统一侧边栏菜单", async ({ page }) => {
   await expect(page.getByRole("navigation", { name: "主导航" })).toBeVisible();
   await expect(page.getByRole("link", { exact: true, name: "项目列表" })).toBeVisible();
   await expect(page.getByRole("link", { exact: true, name: "新建项目" })).toBeVisible();
+  await expect(
+    page.locator('nav[aria-label="主导航"] a[aria-current="page"]'),
+  ).toHaveCount(0);
   await expect(page.getByRole("link", { exact: true, name: "填写" })).toHaveCount(0);
 });
