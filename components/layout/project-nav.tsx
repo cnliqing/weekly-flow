@@ -11,12 +11,11 @@ type ProjectNavProps = {
 export function ProjectNav({ projectId }: ProjectNavProps) {
   const pathname = usePathname();
   const navItems = [
-    { label: "工作台", href: `/projects/${projectId}` },
-    { label: "成员", href: `/projects/${projectId}/members` },
-    { label: "周报", href: `/projects/${projectId}/cycles` },
-    { label: "历史", href: `/projects/${projectId}/history` },
-    { label: "设置", href: `/projects/${projectId}/settings` },
-    { label: "填写", href: "/w" },
+    { label: "项目概览", href: `/projects/${projectId}` },
+    { label: "团队成员", href: `/projects/${projectId}/members` },
+    { label: "周报周期", href: `/projects/${projectId}/cycles` },
+    { label: "历史周报", href: `/projects/${projectId}/history` },
+    { label: "项目设置", href: `/projects/${projectId}/settings` },
   ];
 
   return (

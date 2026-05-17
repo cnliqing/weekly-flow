@@ -1,7 +1,6 @@
 const navItems = [
-  { label: "项目", href: "/" },
-  { label: "创建项目", href: "/projects/new" },
-  { label: "填写", href: "/w" },
+  { label: "项目列表", href: "/" },
+  { label: "新建项目", href: "/projects/new" },
 ];
 
 export function Sidebar() {

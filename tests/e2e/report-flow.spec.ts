@@ -20,7 +20,7 @@ test("成员填写入口显示统一侧边栏菜单", async ({ page }) => {
   await page.goto("/w");
 
   await expect(page.getByRole("navigation", { name: "主导航" })).toBeVisible();
-  await expect(page.getByRole("link", { exact: true, name: "项目" })).toBeVisible();
-  await expect(page.getByRole("link", { exact: true, name: "创建项目" })).toBeVisible();
-  await expect(page.getByRole("link", { exact: true, name: "填写" })).toBeVisible();
+  await expect(page.getByRole("link", { exact: true, name: "项目列表" })).toBeVisible();
+  await expect(page.getByRole("link", { exact: true, name: "新建项目" })).toBeVisible();
+  await expect(page.getByRole("link", { exact: true, name: "填写" })).toHaveCount(0);
 });
