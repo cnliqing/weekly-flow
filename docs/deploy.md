@@ -14,12 +14,9 @@
 ```bash
 NEXT_PUBLIC_APP_URL="https://weeklyflow.example.com"
 DATABASE_URL="postgresql://user:password@db-host:5432/weeklyflow?schema=public"
-AUTH_SECRET="replace-with-a-random-secret"
-ADMIN_EMAIL="admin@example.com"
-ADMIN_PASSWORD="change-me"
 ```
 
-`DATABASE_URL` 指向外部 PostgreSQL。`AUTH_SECRET` 用于 Auth.js 会话签名，生产环境请使用随机长字符串。`ADMIN_EMAIL` 和 `ADMIN_PASSWORD` 是后台管理员登录凭据。
+`DATABASE_URL` 指向外部 PostgreSQL。系统采用开放工作台模式，不需要配置管理员账号、密码或会话签名密钥。
 
 ## AI 环境变量
 
@@ -62,9 +59,6 @@ docker build -t weeklyflow:latest .
 docker run --rm -p 3000:3000 \
   -e NEXT_PUBLIC_APP_URL="https://weeklyflow.example.com" \
   -e DATABASE_URL="postgresql://user:password@db-host:5432/weeklyflow?schema=public" \
-  -e AUTH_SECRET="replace-with-a-random-secret" \
-  -e ADMIN_EMAIL="admin@example.com" \
-  -e ADMIN_PASSWORD="change-me" \
   -e AI_BASE_URL="https://your-openai-compatible-endpoint.example.com/v1" \
   -e AI_API_KEY="replace-with-your-ai-api-key" \
   -e AI_MODEL="your-model-name" \

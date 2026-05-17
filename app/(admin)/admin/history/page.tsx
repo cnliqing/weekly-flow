@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
+import { formatHistoryCycleStatus } from "@/lib/history-format";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -101,7 +102,9 @@ export default async function AdminHistoryPage() {
                   <td className="px-4 py-3 text-ink-700">
                     {formatDate(cycle.weekStartDate)} 至 {formatDate(cycle.weekEndDate)}
                   </td>
-                  <td className="px-4 py-3 text-ink-700">{cycle.status}</td>
+                  <td className="px-4 py-3 text-ink-700">
+                    {formatHistoryCycleStatus(cycle.status)}
+                  </td>
                   <td className="px-4 py-3 text-ink-700">
                     {cycle._count.submissions} 份
                   </td>

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAiModel } from "@/lib/ai/client";
 import { summarizeWeeklyReports } from "@/lib/ai/summarize";
-import { getAdminSession } from "@/lib/auth";
+import { getSystemOperator } from "@/lib/operator";
 import { prisma } from "@/lib/prisma";
 import { renderWeeklyReport } from "@/lib/report-template";
 import {
@@ -16,11 +16,7 @@ function formatDate(date: Date): string {
 }
 
 export async function POST(request: NextRequest) {
-  const session = await getAdminSession();
-
-  if (!session) {
-    return NextResponse.json({ error: "未登录或无管理员权限。" }, { status: 401 });
-  }
+  const operator = getSystemOperator();
 
   const body = (await request.json().catch(() => null)) as
     | { cycleId?: unknown }
@@ -79,12 +75,12 @@ export async function POST(request: NextRequest) {
       },
       update: {
         draftContent,
-        updatedBy: session.user.email ?? session.user.name ?? "admin",
+        updatedBy: operator.email,
       },
       create: {
         cycleId: cycle.id,
         draftContent,
-        updatedBy: session.user.email ?? session.user.name ?? "admin",
+        updatedBy: operator.email,
       },
     });
 

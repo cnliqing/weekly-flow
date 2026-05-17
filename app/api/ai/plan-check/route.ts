@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAiModel } from "@/lib/ai/client";
 import { checkPlanWithAi } from "@/lib/ai/plan-check";
-import { getAdminSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import {
   normalizeStructuredContent,
@@ -26,7 +25,6 @@ export async function POST(request: NextRequest) {
   const cycleId = typeof body?.cycleId === "string" ? body.cycleId.trim() : "";
   const submissionId =
     typeof body?.submissionId === "string" ? body.submissionId.trim() : "";
-  const memberId = typeof body?.memberId === "string" ? body.memberId.trim() : "";
   const cycle = cycleId
     ? await prisma.weeklyReportCycle.findUnique({
         where: {
@@ -50,14 +48,6 @@ export async function POST(request: NextRequest) {
         },
       })
     : null;
-  const session = await getAdminSession();
-  const isMemberScopedRequest =
-    Boolean(submission) && memberId.length > 0 && memberId === submission?.memberId;
-
-  if (!session && !isMemberScopedRequest) {
-    return NextResponse.json({ error: "未登录或无管理员权限。" }, { status: 401 });
-  }
-
   if (submissionId && !submission) {
     return NextResponse.json({ error: "成员提交不存在。" }, { status: 404 });
   }

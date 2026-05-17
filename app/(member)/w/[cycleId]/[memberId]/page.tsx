@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { AppShell } from "@/components/layout/app-shell";
 import { ReportEditor } from "@/components/reports/report-editor";
 import { Card } from "@/components/ui/card";
 import { prisma } from "@/lib/prisma";
@@ -68,7 +69,7 @@ export default async function MemberWeeklyReportPage({ params }: PageProps) {
       : null;
 
   return (
-    <main className="min-h-screen bg-paper px-5 py-8 text-ink-900 md:px-10">
+    <AppShell>
       <section className="mx-auto grid max-w-4xl gap-6">
         <div>
           <Link className="cursor-pointer text-sm font-semibold text-accent" href={`/w/${cycle.id}`}>
@@ -96,6 +97,6 @@ export default async function MemberWeeklyReportPage({ params }: PageProps) {
           />
         </Card>
       </section>
-    </main>
+    </AppShell>
   );
 }

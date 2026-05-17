@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AppShell } from "@/components/layout/app-shell";
 import { Card } from "@/components/ui/card";
 import { prisma } from "@/lib/prisma";
 
@@ -28,7 +29,7 @@ export default async function MemberEntryIndexPage() {
   });
 
   return (
-    <main className="min-h-screen bg-paper px-5 py-8 text-ink-900 md:px-10">
+    <AppShell>
       <section className="mx-auto grid max-w-4xl gap-6">
         <div>
           <Link className="cursor-pointer text-sm font-semibold text-accent" href="/">
@@ -69,11 +70,11 @@ export default async function MemberEntryIndexPage() {
         {cycles.length === 0 ? (
           <Card>
             <p className="text-sm leading-7 text-ink-700">
-              暂无开放中的周报周期。请联系管理员创建本周周报。
+              暂无开放中的周报周期。请在工作台中创建本周周报。
             </p>
           </Card>
         ) : null}
       </section>
-    </main>
+    </AppShell>
   );
 }

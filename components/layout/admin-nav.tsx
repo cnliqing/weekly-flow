@@ -5,12 +5,13 @@ import { usePathname } from "next/navigation";
 import { clsx } from "clsx";
 
 const navItems = [
-  { label: "总览", href: "/admin" },
+  { label: "工作台", href: "/admin" },
   { label: "项目", href: "/admin/projects" },
   { label: "成员", href: "/admin/members" },
   { label: "周报", href: "/admin/cycles" },
   { label: "历史", href: "/admin/history" },
   { label: "设置", href: "/admin/settings" },
+  { label: "填写", href: "/w" },
 ];
 
 export function AdminNav() {

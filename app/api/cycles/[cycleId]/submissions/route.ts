@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAdminSession } from "@/lib/auth";
 import { checkPlanCompletion } from "@/lib/plan-check";
 import { prisma } from "@/lib/prisma";
 import {
@@ -17,12 +16,6 @@ type RouteContext = {
 };
 
 export async function GET(_request: NextRequest, context: RouteContext) {
-  const session = await getAdminSession();
-
-  if (!session) {
-    return NextResponse.json({ error: "未登录或无管理员权限。" }, { status: 401 });
-  }
-
   const { cycleId } = await context.params;
   const submissions = await prisma.memberSubmission.findMany({
     where: {

@@ -24,7 +24,7 @@ const adminEntrances = [
   },
   {
     title: "设置",
-    description: "检查数据库、AI 和管理员账号等运行环境配置状态。",
+    description: "维护项目数据，后续集中配置周报目标和 AI 提示词。",
     href: "/admin/settings",
   },
 ];
@@ -38,7 +38,7 @@ export default function AdminPage() {
           周报通 / WeeklyFlow
         </h2>
         <p className="mt-4 max-w-2xl text-sm leading-7 text-ink-700">
-          这里是管理员工作台。第一阶段只开放管理员账号密码登录；成员仍通过免登录填写入口提交周报。
+          这里是团队工作台。系统采用开放访问模式，任何访问者都可以维护项目、成员、周报周期、汇总定稿和历史记录。
         </p>
       </div>
 

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { AppShell } from "@/components/layout/app-shell";
 import { Card } from "@/components/ui/card";
 import { prisma } from "@/lib/prisma";
 
@@ -43,7 +44,7 @@ export default async function MemberSelectPage({ params }: PageProps) {
   }
 
   return (
-    <main className="min-h-screen bg-paper px-5 py-8 text-ink-900 md:px-10">
+    <AppShell>
       <section className="mx-auto grid max-w-4xl gap-6">
         <div>
           <Link className="cursor-pointer text-sm font-semibold text-accent" href="/w">
@@ -74,11 +75,11 @@ export default async function MemberSelectPage({ params }: PageProps) {
 
           {cycle.project.members.length === 0 ? (
             <p className="text-sm leading-7 text-ink-700">
-              当前项目暂无启用成员，请联系管理员维护项目人员。
+              当前项目暂无启用成员，请在工作台中维护项目人员。
             </p>
           ) : null}
         </Card>
       </section>
-    </main>
+    </AppShell>
   );
 }

@@ -4,9 +4,9 @@ import Link from "next/link";
 
 const guideCards = [
   {
-    title: "管理员入口",
+    title: "团队工作台",
     description: "配置项目成员、创建周报周期，并在同一处完成汇总和定稿。",
-    action: "进入管理后台",
+    action: "进入工作台",
     href: "/admin",
   },
   {
@@ -27,7 +27,7 @@ export default function HomePage() {
             周报通 / WeeklyFlow
           </h2>
           <p className="mt-5 text-base leading-8 text-ink-700">
-            面向项目团队的轻量周报工作台。管理员维护成员与周期，成员快速提交周报，系统辅助检查计划承接并生成汇总草稿。
+            面向项目团队的轻量周报工作台。团队可直接维护成员与周期，成员快速提交周报，系统辅助检查计划承接并生成汇总草稿。
           </p>
         </div>
 
@@ -43,7 +43,7 @@ export default function HomePage() {
               <Link
                 aria-label={card.action}
                 className={
-                  card.title === "管理员入口"
+                  card.title === "团队工作台"
                     ? "mt-8 inline-flex h-10 w-fit items-center justify-center rounded-md bg-accent px-4 text-sm font-semibold text-white transition hover:bg-[#176447]"
                     : "mt-8 inline-flex h-10 w-fit items-center justify-center rounded-md border border-line bg-white px-4 text-sm font-semibold text-ink-900 transition hover:border-ink-500"
                 }

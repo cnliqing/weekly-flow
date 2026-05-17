@@ -1,15 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAdminSession } from "@/lib/auth";
+import { getSystemOperator } from "@/lib/operator";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
-  const session = await getAdminSession();
-
-  if (!session) {
-    return NextResponse.json({ error: "未登录或无管理员权限。" }, { status: 401 });
-  }
+  const operator = getSystemOperator();
 
   const body = (await request.json().catch(() => null)) as
     | { cycleId?: unknown; finalContent?: unknown }
@@ -43,13 +39,13 @@ export async function POST(request: NextRequest) {
     update: {
       finalContent,
       status: "finalized",
-      updatedBy: session.user.email ?? session.user.name ?? "admin",
+      updatedBy: operator.email,
     },
     create: {
       cycleId,
       finalContent,
       status: "finalized",
-      updatedBy: session.user.email ?? session.user.name ?? "admin",
+      updatedBy: operator.email,
     },
   });
 

@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { getActionErrorMessage, redirectWithFeedback } from "@/lib/action-feedback";
-import { getAdminSession } from "@/lib/auth";
 import { createReportCycleForRange, getDefaultProject } from "@/lib/cycles";
 import { formatCycleStatus } from "@/lib/cycle-status";
 import { prisma } from "@/lib/prisma";
@@ -16,12 +15,6 @@ async function createCurrentWeekCycle(formData: FormData) {
   let message = "本周周报已创建。";
 
   try {
-    const session = await getAdminSession();
-
-    if (!session) {
-      throw new Error("未登录或无管理员权限。");
-    }
-
     const project = await getDefaultProject();
 
     if (!project) {

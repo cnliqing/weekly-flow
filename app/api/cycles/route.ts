@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAdminSession } from "@/lib/auth";
 import {
   createCurrentWeekCycle,
   createReportCycleForRange,
@@ -9,12 +8,6 @@ import {
 export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
-  const session = await getAdminSession();
-
-  if (!session) {
-    return NextResponse.json({ error: "未登录或无管理员权限。" }, { status: 401 });
-  }
-
   const project = await getDefaultProject();
 
   if (!project) {

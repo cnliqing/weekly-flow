@@ -1,6 +1,5 @@
 import { Card } from "@/components/ui/card";
 import { getActionErrorMessage, redirectWithFeedback } from "@/lib/action-feedback";
-import { getAdminSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
@@ -13,12 +12,6 @@ async function updateProject(formData: FormData) {
   let message = "项目信息已保存。";
 
   try {
-    const session = await getAdminSession();
-
-    if (!session) {
-      throw new Error("未登录或无管理员权限。");
-    }
-
     const projectId = String(formData.get("projectId") ?? "").trim();
     const name = String(formData.get("name") ?? "").trim();
     const description = String(formData.get("description") ?? "").trim();

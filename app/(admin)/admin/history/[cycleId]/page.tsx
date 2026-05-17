@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { formatAiRunType } from "@/lib/ai-run";
+import { formatHistoryCycleStatus } from "@/lib/history-format";
 import { prisma } from "@/lib/prisma";
 import {
   normalizeStructuredContent,
@@ -78,7 +79,8 @@ export default async function AdminHistoryDetailPage({ params }: PageProps) {
         <h2 className="mt-3 text-3xl font-semibold tracking-normal">{cycle.title}</h2>
         <p className="mt-4 max-w-2xl text-sm leading-7 text-ink-700">
           {cycle.project.name} · {formatDate(cycle.weekStartDate)} 至{" "}
-          {formatDate(cycle.weekEndDate)} · 周期状态 {cycle.status}
+          {formatDate(cycle.weekEndDate)} · 周期状态{" "}
+          {formatHistoryCycleStatus(cycle.status)}
         </p>
       </div>
 

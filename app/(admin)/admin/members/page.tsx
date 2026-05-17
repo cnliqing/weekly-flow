@@ -2,7 +2,6 @@ import { MemberForm } from "@/components/forms/member-form";
 import { ConfirmSubmitButton } from "@/components/forms/confirm-submit-button";
 import { Card } from "@/components/ui/card";
 import { getActionErrorMessage, redirectWithFeedback } from "@/lib/action-feedback";
-import { getAdminSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
@@ -15,12 +14,6 @@ async function addMember(formData: FormData) {
   let message = "成员已添加。";
 
   try {
-    const session = await getAdminSession();
-
-    if (!session) {
-      throw new Error("未登录或无管理员权限。");
-    }
-
     const projectId = String(formData.get("projectId") ?? "").trim();
     const name = String(formData.get("name") ?? "").trim();
 
@@ -65,12 +58,6 @@ async function toggleMemberStatus(formData: FormData) {
   let message = "成员状态已更新。";
 
   try {
-    const session = await getAdminSession();
-
-    if (!session) {
-      throw new Error("未登录或无管理员权限。");
-    }
-
     const memberId = String(formData.get("memberId") ?? "").trim();
     const nextStatus = String(formData.get("isActive") ?? "") === "true";
 
@@ -105,12 +92,6 @@ async function deleteMember(formData: FormData) {
   let message = "成员已删除。";
 
   try {
-    const session = await getAdminSession();
-
-    if (!session) {
-      throw new Error("未登录或无管理员权限。");
-    }
-
     const memberId = String(formData.get("memberId") ?? "").trim();
 
     if (!memberId) {
@@ -186,7 +167,7 @@ export default async function AdminMembersPage() {
         <p className="text-sm font-semibold text-accent">成员维护</p>
         <h2 className="mt-3 text-3xl font-semibold tracking-normal">成员</h2>
         <p className="mt-4 max-w-2xl text-sm leading-7 text-ink-700">
-          业务成员仍使用 Prisma `Member` 管理；管理员登录账号来自环境变量，不会写入成员登录表。
+          业务成员使用 Prisma `Member` 管理；系统采用开放工作台模式，不再区分后台登录账号。
         </p>
       </div>
 

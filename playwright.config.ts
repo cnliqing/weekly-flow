@@ -13,10 +13,6 @@ export default defineConfig({
   webServer: {
     command: "npm run dev",
     env: {
-      AUTH_SECRET: "playwright-local-secret",
-      ADMIN_EMAIL: "admin@example.com",
-      ADMIN_PASSWORD: "password",
-      NEXTAUTH_URL: "http://127.0.0.1:3000",
       NEXT_PUBLIC_APP_URL: "http://127.0.0.1:3000",
     },
     url: "http://127.0.0.1:3000",
