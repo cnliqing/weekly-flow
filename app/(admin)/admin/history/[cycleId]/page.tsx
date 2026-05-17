@@ -151,7 +151,7 @@ export default async function AdminHistoryDetailPage({ params }: PageProps) {
                 <div className="mt-4 grid gap-3 text-sm leading-6 text-ink-700 md:grid-cols-2">
                   <ContentBlock items={content.workItems} title="本周工作" />
                   <ContentBlock items={content.delayItems} title="延期说明" />
-                  <ContentBlock items={content.problemItems} title="问题解决" />
+                  <ContentBlock items={content.problemItems} title="问题及解决办法" />
                   <ContentBlock items={content.nextPlanItems} title="下周计划" />
                 </div>
                 {submission.freeTextContent ? (

@@ -29,11 +29,9 @@ export default async function AdminCycleDetailPage({ params }: PageProps) {
           members: {
             where: {
               isActive: true,
+              role: "member",
             },
             orderBy: [
-              {
-                role: "asc",
-              },
               {
                 createdAt: "asc",
               },
@@ -42,6 +40,11 @@ export default async function AdminCycleDetailPage({ params }: PageProps) {
         },
       },
       submissions: {
+        where: {
+          member: {
+            role: "member",
+          },
+        },
         include: {
           member: true,
         },
@@ -64,7 +67,7 @@ export default async function AdminCycleDetailPage({ params }: PageProps) {
   return (
     <section className="mx-auto flex max-w-6xl flex-col gap-8">
       <div>
-        <Link className="text-sm font-semibold text-accent" href="/admin/cycles">
+        <Link className="cursor-pointer text-sm font-semibold text-accent" href="/admin/cycles">
           返回周报周期
         </Link>
         <h2 className="mt-3 text-3xl font-semibold tracking-normal">{cycle.title}</h2>
@@ -161,7 +164,7 @@ export default async function AdminCycleDetailPage({ params }: PageProps) {
                 <div className="mt-3 grid gap-3 text-sm leading-6 text-ink-700 md:grid-cols-2">
                   <ContentBlock items={content.workItems} title="本周工作" />
                   <ContentBlock items={content.delayItems} title="延期说明" />
-                  <ContentBlock items={content.problemItems} title="问题解决" />
+                  <ContentBlock items={content.problemItems} title="问题及解决办法" />
                   <ContentBlock items={content.nextPlanItems} title="下周计划" />
                 </div>
               </div>

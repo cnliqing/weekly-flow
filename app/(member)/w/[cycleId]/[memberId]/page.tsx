@@ -71,7 +71,7 @@ export default async function MemberWeeklyReportPage({ params }: PageProps) {
     <main className="min-h-screen bg-paper px-5 py-8 text-ink-900 md:px-10">
       <section className="mx-auto grid max-w-4xl gap-6">
         <div>
-          <Link className="text-sm font-semibold text-accent" href={`/w/${cycle.id}`}>
+          <Link className="cursor-pointer text-sm font-semibold text-accent" href={`/w/${cycle.id}`}>
             返回选择姓名
           </Link>
           <p className="mt-5 text-sm font-semibold text-accent">成员周报填写</p>

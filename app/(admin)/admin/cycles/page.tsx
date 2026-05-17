@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { getActionErrorMessage, redirectWithFeedback } from "@/lib/action-feedback";
 import { getAdminSession } from "@/lib/auth";
 import { createReportCycleForRange, getDefaultProject } from "@/lib/cycles";
+import { formatCycleStatus } from "@/lib/cycle-status";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
@@ -184,7 +185,9 @@ export default async function AdminCyclesPage() {
                   <td className="px-4 py-3 text-ink-700">
                     {formatDate(cycle.weekStartDate)} 至 {formatDate(cycle.weekEndDate)}
                   </td>
-                  <td className="px-4 py-3 text-ink-700">{cycle.status}</td>
+                  <td className="px-4 py-3 text-ink-700">
+                    {formatCycleStatus(cycle.status)}
+                  </td>
                   <td className="px-4 py-3 text-ink-700">
                     {cycle._count.submissions} 份
                   </td>
